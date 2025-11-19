@@ -1,12 +1,12 @@
-package com.tanggo.fund.metadriven.lwc.outbound;
+package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
 
-import com.tanggo.fund.metadriven.lwc.domain.EntityEvent;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DAnnotation;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DClass;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 import com.tanggo.fund.metadriven.lwc.domain.meta.registry.DClassRegistry;
 
 import java.util.ArrayList;

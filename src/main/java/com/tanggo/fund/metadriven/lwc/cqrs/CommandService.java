@@ -1,9 +1,9 @@
-package com.tanggo.fund.metadriven.lwc.apps;
+package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
-import com.tanggo.fund.metadriven.lwc.domain.Command;
-import com.tanggo.fund.metadriven.lwc.domain.CommandResult;
-import com.tanggo.fund.metadriven.lwc.outbound.CommandRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandRepo;
 
 public class CommandService {
     private final CommandRepo commandRepo = new CommandRepo();

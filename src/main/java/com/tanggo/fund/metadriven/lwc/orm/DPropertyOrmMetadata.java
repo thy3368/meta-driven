@@ -1,9 +1,9 @@
-package com.tanggo.fund.metadriven.lwc.domain.meta.orm;
+package com.tanggo.fund.metadriven.lwc.orm;
 
 
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DAnnotation;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 
 /**
  * DProperty的ORM元数据提取器

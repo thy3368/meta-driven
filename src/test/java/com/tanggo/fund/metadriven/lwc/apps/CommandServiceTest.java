@@ -1,8 +1,9 @@
 package com.tanggo.fund.metadriven.lwc.apps;
 
-import com.tanggo.fund.metadriven.lwc.domain.Command;
-import com.tanggo.fund.metadriven.lwc.domain.CommandResult;
-import com.tanggo.fund.metadriven.lwc.outbound.CommandRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.CommandService;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

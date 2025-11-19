@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.domain.meta.atom;
+package com.tanggo.fund.metadriven.lwc.dobject.atom;
 
 import lombok.Data;
 

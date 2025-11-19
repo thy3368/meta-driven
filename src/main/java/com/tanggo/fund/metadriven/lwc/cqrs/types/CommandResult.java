@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.domain;
+package com.tanggo.fund.metadriven.lwc.cqrs.types;
 
 import lombok.Data;
 

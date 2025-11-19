@@ -1,11 +1,11 @@
-package com.tanggo.fund.metadriven.lwc.domain.meta.orm;
+package com.tanggo.fund.metadriven.lwc.orm;
 
 
-import com.tanggo.fund.metadriven.lwc.domain.Command;
-import com.tanggo.fund.metadriven.lwc.domain.CommandResult;
-import com.tanggo.fund.metadriven.lwc.domain.EntityEvent;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DynamicObject;
-import com.tanggo.fund.metadriven.lwc.outbound.EntityRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.EntityRepo;
 
 public class Test {
 

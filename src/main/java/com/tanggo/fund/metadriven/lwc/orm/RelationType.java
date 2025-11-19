@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.domain.meta.orm;
+package com.tanggo.fund.metadriven.lwc.orm;
 
 /**
  * JPA关系类型枚举

@@ -1,11 +1,11 @@
-package com.tanggo.fund.metadriven.lwc.domain.meta.atom.test;
+package com.tanggo.fund.metadriven.lwc.dobject.atom.test;
 
 
 
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DClass;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DMethod;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DMethod;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 
 import java.util.ArrayList;
 import java.util.List;

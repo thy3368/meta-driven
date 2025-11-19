@@ -1,7 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.domain.meta.registry;
 
 
-import com.tanggo.fund.metadriven.lwc.domain.meta.atom.DClass;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
