@@ -5,6 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
+import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
 /**
@@ -56,7 +57,7 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
     public static class PlaceOrderResult {
         private boolean success;
         private LimitOrder order;
-        private java.util.List<OrderBookService.Trade> trades;
+        private java.util.List<Trade> trades;
 
         public boolean isSuccess() {
             return success;
@@ -74,11 +75,11 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
             this.order = order;
         }
 
-        public java.util.List<OrderBookService.Trade> getTrades() {
+        public java.util.List<Trade> getTrades() {
             return trades;
         }
 
-        public void setTrades(java.util.List<OrderBookService.Trade> trades) {
+        public void setTrades(java.util.List<Trade> trades) {
             this.trades = trades;
         }
 
