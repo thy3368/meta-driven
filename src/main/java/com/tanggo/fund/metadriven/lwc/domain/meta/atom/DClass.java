@@ -1,8 +1,10 @@
 package com.tanggo.fund.metadriven.lwc.domain.meta.atom;
 
-import com.tanggo.fund.jldp.lwc.domain.meta.script.ScriptEngine;
-import com.tanggo.fund.jldp.lwc.domain.meta.script.ScriptEngineRegistry;
-import com.tanggo.fund.jldp.lwc.domain.meta.script.ScriptExecutionException;
+
+import com.tanggo.fund.metadriven.lwc.domain.meta.script.MethodScript;
+import com.tanggo.fund.metadriven.lwc.domain.meta.script.ScriptEngine;
+import com.tanggo.fund.metadriven.lwc.domain.meta.script.ScriptEngineRegistry;
+import com.tanggo.fund.metadriven.lwc.domain.meta.script.ScriptExecutionException;
 import lombok.Data;
 
 import java.io.IOException;
@@ -194,15 +196,15 @@ public class DClass {
             Class<?> scriptClass = Class.forName(method.getScriptClassName());
 
             // 检查是否实现MethodScript接口
-            if (!com.tanggo.fund.jldp.lwc.domain.meta.script.MethodScript.class.isAssignableFrom(scriptClass)) {
+            if (!MethodScript.class.isAssignableFrom(scriptClass)) {
                 throw new IllegalArgumentException(
                     "脚本类 " + method.getScriptClassName() + " 必须实现 MethodScript 接口"
                 );
             }
 
             // 创建实例
-            com.tanggo.fund.jldp.lwc.domain.meta.script.MethodScript script =
-                (com.tanggo.fund.jldp.lwc.domain.meta.script.MethodScript) scriptClass.getDeclaredConstructor().newInstance();
+       MethodScript script =
+                (MethodScript) scriptClass.getDeclaredConstructor().newInstance();
 
             // 执行
             return script.execute(inputs);
