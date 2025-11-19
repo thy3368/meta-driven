@@ -1,25 +1,27 @@
 package com.tanggo.fund.metadriven.lwc.apps;
 
+import com.tanggo.fund.metadriven.lwc.cqrs.CommandService;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
-import com.tanggo.fund.metadriven.lwc.cqrs.CommandService;
-import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandRepo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CommandServiceTest {
+class QueryServiceTest {
 
     @Autowired
     private CommandService commandService;
 
-    @Autowired
-    private CommandRepo commandRepo;
 
     @Test
     void testCommonHandle() {
-        Command command = commandRepo.queryById("ddd");
+
+        Command command = new Command();
+
+
         CommandResult commandResult = commandService.handleCommand(command);
+        CommandResult queryResult = commandService.handleQuery(command);
+
     }
 }

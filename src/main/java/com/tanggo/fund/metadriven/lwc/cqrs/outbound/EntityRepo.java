@@ -1,13 +1,13 @@
 package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
-
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 import com.tanggo.fund.metadriven.lwc.domain.meta.registry.DClassRegistry;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +20,7 @@ import java.util.List;
  * - 负责数据持久化和SQL生成
  * </p>
  */
+@Repository
 public class EntityRepo {
     private EntityRepoCallback entityRepoCallback;
 
@@ -56,7 +57,7 @@ public class EntityRepo {
      * </p>
      *
      * @param entityEvent 实体事件，不能为null
-     * @throws IllegalArgumentException 如果参数无效
+     * @throws IllegalArgumentException  如果参数无效
      * @throws EntityRepositoryException 如果处理失败
      */
     public void process2(EntityEvent entityEvent) {
@@ -75,10 +76,7 @@ public class EntityRepo {
 
             // 验证生成的SQL
             if (sql == null || sql.trim().isEmpty()) {
-                throw new IllegalStateException(
-                    "生成的SQL为空，实体: " + entityEvent.getEntityName() +
-                    ", 操作: " + entityEvent.getOperationType()
-                );
+                throw new IllegalStateException("生成的SQL为空，实体: " + entityEvent.getEntityName() + ", 操作: " + entityEvent.getOperationType());
             }
 
             // ============ 步骤5: 执行SQL ============
@@ -93,12 +91,7 @@ public class EntityRepo {
             throw e;
         } catch (Exception e) {
             // 其他异常 - 包装为EntityRepositoryException
-            throw new EntityRepositoryException(
-                "处理实体事件失败: " + entityEvent.getEntityName() +
-                ", 操作: " + entityEvent.getOperationType() +
-                ", 原因: " + e.getMessage(),
-                e
-            );
+            throw new EntityRepositoryException("处理实体事件失败: " + entityEvent.getEntityName() + ", 操作: " + entityEvent.getOperationType() + ", 原因: " + e.getMessage(), e);
         }
     }
 
@@ -130,11 +123,7 @@ public class EntityRepo {
         DClass dClass = DClassRegistry.INSTANCE.findByName(entityName);
 
         if (dClass == null) {
-            throw new IllegalArgumentException(
-                "未找到实体类定义: " + entityName +
-                "，请先将DClass注册到DClassRegistry中。" +
-                "\n提示: 使用 DClassRegistry.INSTANCE.register(dClass) 进行注册"
-            );
+            throw new IllegalArgumentException("未找到实体类定义: " + entityName + "，请先将DClass注册到DClassRegistry中。" + "\n提示: 使用 DClassRegistry.INSTANCE.register(dClass) 进行注册");
         }
 
         return dClass;
@@ -149,63 +138,14 @@ public class EntityRepo {
 
         // 性能日志（生产环境应使用专业日志框架）
         if (durationMicros > 1000) { // 超过1毫秒时警告
-            System.err.printf(
-                "[WARN] 实体事件处理耗时较长: %.2f μs (%.2f ms), 实体=%s, 操作=%s, 影响行数=%d%n",
-                durationMicros,
-                durationMicros / 1000.0,
-                entityEvent.getEntityName(),
-                entityEvent.getOperationType(),
-                result.getAffectedRows()
-            );
+            System.err.printf("[WARN] 实体事件处理耗时较长: %.2f μs (%.2f ms), 实体=%s, 操作=%s, 影响行数=%d%n", durationMicros, durationMicros / 1000.0, entityEvent.getEntityName(), entityEvent.getOperationType(), result.affectedRows());
         } else {
-            System.out.printf(
-                "[INFO] 实体事件处理成功: %.2f μs, 实体=%s, 操作=%s, 影响行数=%d%n",
-                durationMicros,
-                entityEvent.getEntityName(),
-                entityEvent.getOperationType(),
-                result.getAffectedRows()
-            );
+            System.out.printf("[INFO] 实体事件处理成功: %.2f μs, 实体=%s, 操作=%s, 影响行数=%d%n", durationMicros, entityEvent.getEntityName(), entityEvent.getOperationType(), result.affectedRows());
         }
     }
 
-    /**
-     * SQL执行结果
-     */
-    public static class ExecutionResult {
-        private final int affectedRows;
-        private final boolean success;
-        private final String message;
-
-        public ExecutionResult(int affectedRows, boolean success, String message) {
-            this.affectedRows = affectedRows;
-            this.success = success;
-            this.message = message;
-        }
-
-        public int getAffectedRows() {
-            return affectedRows;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-    }
-
-    /**
-     * 实体仓储异常
-     */
-    public static class EntityRepositoryException extends RuntimeException {
-        public EntityRepositoryException(String message) {
-            super(message);
-        }
-
-        public EntityRepositoryException(String message, Throwable cause) {
-            super(message, cause);
-        }
+    public void replay(List<EntityEvent> entityEvents) {
+        //todo
     }
 
     /**
@@ -298,11 +238,7 @@ public class EntityRepo {
             values.add(formatValue(fieldChange.getNewValue()));
         }
 
-        return String.format("INSERT INTO %s (%s) VALUES (%s)",
-            tableName,
-            String.join(", ", columns),
-            String.join(", ", values)
-        );
+        return String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(", ", columns), String.join(", ", values));
     }
 
     /**
@@ -323,11 +259,7 @@ public class EntityRepo {
         // 获取主键条件
         String whereClause = "id = " + formatValue(entityEvent.getEntityId());
 
-        return String.format("UPDATE %s SET %s WHERE %s",
-            tableName,
-            String.join(", ", setClauses),
-            whereClause
-        );
+        return String.format("UPDATE %s SET %s WHERE %s", tableName, String.join(", ", setClauses), whereClause);
     }
 
     /**
@@ -337,11 +269,7 @@ public class EntityRepo {
         // 获取主键列名
         String idColumnName = getIdColumnName(dClass);
 
-        return String.format("DELETE FROM %s WHERE %s = %s",
-            tableName,
-            idColumnName,
-            formatValue(entityEvent.getEntityId())
-        );
+        return String.format("DELETE FROM %s WHERE %s = %s", tableName, idColumnName, formatValue(entityEvent.getEntityId()));
     }
 
     /**
@@ -420,7 +348,7 @@ public class EntityRepo {
         }
 
         // 其他类型转为字符串并加引号
-        return "'" + value.toString() + "'";
+        return "'" + value + "'";
     }
 
     /**
@@ -430,5 +358,24 @@ public class EntityRepo {
     public DynamicObject queryOne(String entityName) {
         // TODO: 实现查询逻辑
         return null;
+    }
+
+    /**
+         * SQL执行结果
+         */
+        public record ExecutionResult(int affectedRows, boolean success, String message) {
+    }
+
+    /**
+     * 实体仓储异常
+     */
+    public static class EntityRepositoryException extends RuntimeException {
+        public EntityRepositoryException(String message) {
+            super(message);
+        }
+
+        public EntityRepositoryException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

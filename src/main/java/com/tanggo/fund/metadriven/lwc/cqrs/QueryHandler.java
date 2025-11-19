@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
-public class CommandHandler implements ICommandHandler {
+public class QueryHandler implements ICommandHandler {
 
     @Autowired
     private EntityRepo entityRepo;
@@ -25,38 +25,20 @@ public class CommandHandler implements ICommandHandler {
     @Override
     public CommandResult handle(Command command) {
 
-        //1. 预处理
-        proHandle();
-        //2. 业务操作后 生成entity_event
+        //业务操作后 生成entityevent
         List<EntityEvent> entityEvents = doHandle(command);
-        //3. 写入流水
         entityEventRepo.insertBatch(entityEvents);
-        //4. 写库
         entityRepo.replay(entityEvents);
 
-
         CommandResult handleResult = new CommandResult();
-        //5. 后置处理
-        afterHandle();
         return handleResult;
 
     }
-
-    private void proHandle() {
-        //todo 权限检查，参数检查，状态检查等
-    }
-
-
-    private void afterHandle() {
-        //todo
-    }
-
 
     //执行真实业务命令
     private List<EntityEvent> doHandle(Command command) {
         DynamicObject entity = entityRepo.queryOne("entityName");
         //do something biz
-        //生成entity_event 用于持久化
         return Collections.singletonList(new EntityEvent());
     }
 

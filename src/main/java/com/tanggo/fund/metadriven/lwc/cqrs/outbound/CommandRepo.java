@@ -2,7 +2,9 @@ package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class CommandRepo implements ICommandRepo {
 
 
