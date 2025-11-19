@@ -21,20 +21,8 @@ import java.util.List;
  * </p>
  */
 @Repository
-public class EntityRepo {
-    private EntityRepoCallback entityRepoCallback;
+public class EntityRepo implements IEntityRepo {
 
-    public void process(EntityEvent entityEvent, DynamicObject newEntity) {
-        if (entityRepoCallback != null) {
-            entityRepoCallback.before2(entityEvent, newEntity);
-        }
-
-        process2(entityEvent);
-
-        if (entityRepoCallback != null) {
-            entityRepoCallback.after2(entityEvent, newEntity);
-        }
-    }
 
     /**
      * 处理实体事件 - 完整版本
@@ -60,7 +48,8 @@ public class EntityRepo {
      * @throws IllegalArgumentException  如果参数无效
      * @throws EntityRepositoryException 如果处理失败
      */
-    public void process2(EntityEvent entityEvent) {
+    @Override
+    public void process(EntityEvent entityEvent) {
         // 性能监控：开始时间（纳秒级精度）
         long startTimeNanos = System.nanoTime();
 
@@ -144,6 +133,7 @@ public class EntityRepo {
         }
     }
 
+    @Override
     public void replay(List<EntityEvent> entityEvents) {
         //todo
     }
@@ -355,15 +345,16 @@ public class EntityRepo {
      * 根据实体名字查询单个实体
      * TODO: 实现查询逻辑
      */
-    public DynamicObject queryOne(String entityName) {
+    @Override
+    public DynamicObject queryOne4Update(String entityName) {
         // TODO: 实现查询逻辑
         return null;
     }
 
     /**
-         * SQL执行结果
-         */
-        public record ExecutionResult(int affectedRows, boolean success, String message) {
+     * SQL执行结果
+     */
+    public record ExecutionResult(int affectedRows, boolean success, String message) {
     }
 
     /**

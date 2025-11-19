@@ -2,7 +2,7 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.EntityEventRepo;
-import com.tanggo.fund.metadriven.lwc.cqrs.outbound.EntityRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.IEntityRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
@@ -17,7 +17,7 @@ import java.util.List;
 public class CommandHandler implements ICommandHandler {
 
     @Autowired
-    private EntityRepo entityRepo;
+    private IEntityRepo entityRepo;
     @Autowired
     private EntityEventRepo entityEventRepo;
 
@@ -54,7 +54,7 @@ public class CommandHandler implements ICommandHandler {
 
     //执行真实业务命令
     private List<EntityEvent> doHandle(Command command) {
-        DynamicObject entity = entityRepo.queryOne("entityName");
+        DynamicObject entity = entityRepo.queryOne4Update("entityName");
         //do something biz
         //生成entity_event 用于持久化
         return Collections.singletonList(new EntityEvent());

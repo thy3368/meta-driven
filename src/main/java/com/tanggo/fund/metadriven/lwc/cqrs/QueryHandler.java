@@ -37,7 +37,7 @@ public class QueryHandler implements ICommandHandler {
 
     //执行真实业务命令
     private List<EntityEvent> doHandle(Command command) {
-        DynamicObject entity = entityRepo.queryOne("entityName");
+        DynamicObject entity = entityRepo.queryOne4Update("entityName");
         //do something biz
         return Collections.singletonList(new EntityEvent());
     }
