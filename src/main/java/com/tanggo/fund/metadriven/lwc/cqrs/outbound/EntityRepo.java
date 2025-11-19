@@ -351,6 +351,11 @@ public class EntityRepo implements IEntityRepo {
         return null;
     }
 
+    @Override
+    public DynamicObject queryOne(String entityName) {
+        return null;
+    }
+
     /**
      * SQL执行结果
      */

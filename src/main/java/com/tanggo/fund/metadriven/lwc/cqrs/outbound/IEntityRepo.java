@@ -13,4 +13,6 @@ public interface IEntityRepo {
 
     //加锁 1锁 2判 3更新
     DynamicObject queryOne4Update(String entityName);
+
+    DynamicObject queryOne(String entityName);
 }
