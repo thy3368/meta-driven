@@ -1,11 +1,11 @@
-package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
+package com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 
 import java.util.List;
 
-public interface IEntityRepo {
+public interface IEntityObjectRepo {
     void process(EntityEvent entityEvent);
 
     //根据事件回放数据

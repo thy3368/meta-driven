@@ -1,6 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.ICommandRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import org.springframework.stereotype.Repository;
 

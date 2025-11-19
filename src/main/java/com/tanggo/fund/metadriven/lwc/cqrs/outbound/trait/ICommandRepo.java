@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
+package com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait;
 
 
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;

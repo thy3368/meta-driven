@@ -1,6 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
@@ -21,7 +22,7 @@ import java.util.List;
  * </p>
  */
 @Repository
-public class EntityRepo implements IEntityRepo {
+public class EntityObjectRepo implements IEntityObjectRepo {
 
 
     /**

@@ -1,7 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
-import com.tanggo.fund.metadriven.lwc.cqrs.outbound.IEntityRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class QueryHandler implements ICommandHandler {
 
     @Autowired
-    private IEntityRepo entityRepo;
+    private IEntityObjectRepo entityRepo;
 
 
     @Override

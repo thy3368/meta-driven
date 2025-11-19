@@ -2,7 +2,7 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.EntityEventRepo;
-import com.tanggo.fund.metadriven.lwc.cqrs.outbound.IEntityRepo;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
@@ -17,7 +17,7 @@ import java.util.List;
 public class CommandHandler implements ICommandHandler {
 
     @Autowired
-    private IEntityRepo entityRepo;
+    private IEntityObjectRepo entityRepo;
     @Autowired
     private EntityEventRepo entityEventRepo;
 
