@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- ========================================
+         OrderBook Service (Core Business Logic)
+         ======================================== -->
+    <bean id="orderBookService"
+          class="com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService">
+        <description>
+            限价订单薄核心服务
+            - 使用TreeMap实现O(log n)性能
+            - 支持价格优先、时间优先撮合
+            - 无锁化设计满足低时延要求
+        </description>
+    </bean>
+
+    <!-- ========================================
+         Command Handlers
+         ======================================== -->
+
+    <!-- 下单命令处理器 -->
+    <bean id="placeOrderCommandHandler"
+          class="com.tanggo.fund.metadriven.lwc.lob.handlers.PlaceOrderCommandHandler">
+        <property name="orderBookService" ref="orderBookService"/>
+    </bean>
+
+    <!-- 撤单命令处理器 -->
+    <bean id="cancelOrderCommandHandler"
+          class="com.tanggo.fund.metadriven.lwc.lob.handlers.CancelOrderCommandHandler">
+        <property name="orderBookService" ref="orderBookService"/>
+    </bean>
+
+    <!-- 查询订单薄命令处理器 -->
+    <bean id="queryOrderBookCommandHandler"
+          class="com.tanggo.fund.metadriven.lwc.lob.handlers.QueryOrderBookCommandHandler">
+        <property name="orderBookService" ref="orderBookService"/>
+    </bean>
+
+    <!-- ========================================
+         Command Handler Registry (使用Map配置)
+         ======================================== -->
+    <bean id="lobCommandHandlerRegistry" class="java.util.HashMap">
+        <constructor-arg>
+            <map key-type="java.lang.String"
+                 value-type="com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler">
+                <entry key="placeOrder" value-ref="placeOrderCommandHandler"/>
+                <entry key="cancelOrder" value-ref="cancelOrderCommandHandler"/>
+                <entry key="queryOrderBook" value-ref="queryOrderBookCommandHandler"/>
+            </map>
+        </constructor-arg>
+    </bean>
+
+</beans>
