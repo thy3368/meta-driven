@@ -1,5 +1,6 @@
-package com.tanggo.fund.metadriven.lwc.cqrs;
+package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
+import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
 import lombok.Data;
 import org.springframework.stereotype.Repository;
 

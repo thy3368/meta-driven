@@ -1,6 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandHandlerRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
@@ -17,7 +18,7 @@ public class CommandService {
     private CommandHandlerRepo commandHandlerRepo;
 
 
-    public CommandResult handleCommand(Command command) {
+    public CommandResult  handleCommand(Command command) {
 
 //        commandRepo.insert(command);
         ICommandHandler handler = commandHandlerRepo.queryCommandHandler(command.getMethodName());
