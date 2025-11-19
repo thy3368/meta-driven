@@ -1,0 +1,17 @@
+package com.tanggo.fund.metadriven.lwc.domain.meta.atom;
+
+import lombok.Data;
+
+import java.util.Map;
+
+@Data
+public class DAnnotation {
+
+    private Map<String, String> propertyMap;
+
+    public String getValue(String table) {
+
+        return propertyMap.get(table);
+
+    }
+}
