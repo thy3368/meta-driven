@@ -10,4 +10,9 @@ public class CommandRepo implements ICommandRepo {
     public void insert(Command command) {
 
     }
+
+    @Override
+    public Command queryById(String id) {
+        return null;
+    }
 }

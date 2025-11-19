@@ -9,4 +9,5 @@ public interface ICommandRepo {
     void insert(Command command);
 
 
+    Command queryById(String id);
 }

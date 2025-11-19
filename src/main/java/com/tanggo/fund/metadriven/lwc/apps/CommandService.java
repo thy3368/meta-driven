@@ -8,7 +8,7 @@ import com.tanggo.fund.metadriven.lwc.outbound.CommandRepo;
 public class CommandService {
     private final CommandRepo commandRepo = new CommandRepo();
 
-    public CommandResult commonHandle(Command command) {
+    public CommandResult handle(Command command) {
 
         commandRepo.insert(command);
         ICommandHandler handler = queryHandler(command);
