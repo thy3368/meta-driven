@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.lob.domain;
+package com.tanggo.fund.metadriven.lwc.lob.domain.repo;
 
 import java.util.List;
 

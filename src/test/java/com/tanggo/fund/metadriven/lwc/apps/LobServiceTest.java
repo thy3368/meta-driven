@@ -5,7 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.QueryOrderBookCommand;
-import com.tanggo.fund.metadriven.lwc.lob.domain.OrderBookSnapshot;
+import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.domain.OrderSide;
 import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 import com.tanggo.fund.metadriven.lwc.lob.handlers.CancelOrderCommandHandler;

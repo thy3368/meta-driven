@@ -1,6 +1,7 @@
-package com.tanggo.fund.metadriven.lwc.lob.domain;
+package com.tanggo.fund.metadriven.lwc.lob.domain.repo;
 
 
+import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
 
 /**
  * 订单薄仓储接口 - 遵循Clean Architecture的依赖倒置原则

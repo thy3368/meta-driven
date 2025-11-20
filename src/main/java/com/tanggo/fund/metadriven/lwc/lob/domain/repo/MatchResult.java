@@ -1,4 +1,7 @@
-package com.tanggo.fund.metadriven.lwc.lob.domain;
+package com.tanggo.fund.metadriven.lwc.lob.domain.repo;
+
+import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
+import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 
 import java.util.List;
 

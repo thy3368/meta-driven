@@ -5,7 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
-import com.tanggo.fund.metadriven.lwc.lob.domain.MatchResult;
+import com.tanggo.fund.metadriven.lwc.lob.domain.repo.MatchResult;
 import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 

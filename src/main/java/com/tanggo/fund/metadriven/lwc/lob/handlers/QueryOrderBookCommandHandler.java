@@ -4,7 +4,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.QueryOrderBookCommand;
-import com.tanggo.fund.metadriven.lwc.lob.domain.OrderBookSnapshot;
+import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
 /**
