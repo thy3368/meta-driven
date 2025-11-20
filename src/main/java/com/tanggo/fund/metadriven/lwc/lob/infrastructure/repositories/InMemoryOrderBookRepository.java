@@ -2,7 +2,7 @@ package com.tanggo.fund.metadriven.lwc.lob.infrastructure.repositories;
 
 import com.tanggo.fund.metadriven.lwc.lob.domain.*;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.MatchResult;
-import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookRepository;
+import com.tanggo.fund.metadriven.lwc.lob.domain.repo.IOrderBookRepository;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.PriceLevel;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 使用TreeMap实现价格优先、时间优先的撮合逻辑
  * 符合低时延要求：O(log n)插入/删除性能
  */
-public class InMemoryOrderBookRepository implements OrderBookRepository {
+public class InMemoryOrderBookRepository implements IOrderBookRepository {
 
     // 每个交易对的订单薄
     private final Map<String, OrderBook> orderBooks = new ConcurrentHashMap<>();

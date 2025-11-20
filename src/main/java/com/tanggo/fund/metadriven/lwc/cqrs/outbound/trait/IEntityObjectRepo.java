@@ -5,7 +5,7 @@ import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 
 import java.util.List;
 
-public interface IEntityObjectRepo {
+public interface IEntityObjectRepo extends IRepository {
     void process(EntityEvent entityEvent);
 
     //根据事件回放数据

@@ -3,7 +3,7 @@ package com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 
-public interface ICommandRepo {
+public interface ICommandRepo extends IRepository {
 
 
     void insert(Command command);

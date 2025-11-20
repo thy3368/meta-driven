@@ -1,13 +1,14 @@
 package com.tanggo.fund.metadriven.lwc.lob.domain.repo;
 
 
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IRepository;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
 
 /**
  * 订单薄仓储接口 - 遵循Clean Architecture的依赖倒置原则
  * 领域层定义接口，基础设施层实现
  */
-public interface OrderBookRepository {
+public interface IOrderBookRepository extends IRepository {
 
     /**
      * 添加订单到订单薄并尝试撮合

@@ -2,7 +2,7 @@ package com.tanggo.fund.metadriven.lwc.lob.service;
 
 import com.tanggo.fund.metadriven.lwc.lob.domain.*;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.MatchResult;
-import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookRepository;
+import com.tanggo.fund.metadriven.lwc.lob.domain.repo.IOrderBookRepository;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 
 import java.util.Objects;
@@ -13,12 +13,12 @@ import java.util.Objects;
  */
 public class OrderBookService {
 
-    private final OrderBookRepository repository;
+    private final IOrderBookRepository repository;
 
     /**
      * 构造器注入，符合依赖倒置原则
      */
-    public OrderBookService(OrderBookRepository repository) {
+    public OrderBookService(IOrderBookRepository repository) {
         this.repository = Objects.requireNonNull(repository, "repository不能为null");
     }
 
