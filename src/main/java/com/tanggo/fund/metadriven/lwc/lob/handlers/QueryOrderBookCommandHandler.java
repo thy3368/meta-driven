@@ -3,9 +3,12 @@ package com.tanggo.fund.metadriven.lwc.lob.handlers;
 import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.lob.commands.QueryOrderBookCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
+
+import java.util.List;
 
 /**
  * 查询订单薄命令处理器
@@ -37,5 +40,20 @@ public class QueryOrderBookCommandHandler implements ICommandHandler {
         cmdResult.setDate(snapshot);
 
         return cmdResult;
+    }
+
+    @Override
+    public void afterHandle(Command command, List<EntityEvent> entityEvents) {
+
+    }
+
+    @Override
+    public void proHandle(Command command) {
+
+    }
+
+    @Override
+    public List<EntityEvent> doHandle(Command command) {
+        return List.of();
     }
 }

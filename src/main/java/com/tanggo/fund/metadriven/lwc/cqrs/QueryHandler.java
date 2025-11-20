@@ -4,9 +4,12 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class QueryHandler implements ICommandHandler {
@@ -27,6 +30,21 @@ public class QueryHandler implements ICommandHandler {
         afterHandle();
         return handleResult;
 
+    }
+
+    @Override
+    public void afterHandle(Command command, List<EntityEvent> entityEvents) {
+
+    }
+
+    @Override
+    public void proHandle(Command command) {
+
+    }
+
+    @Override
+    public List<EntityEvent> doHandle(Command command) {
+        return List.of();
     }
 
     private void proHandle() {

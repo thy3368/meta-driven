@@ -26,7 +26,7 @@ public class CommandHandler implements ICommandHandler {
     public CommandResult handle(Command command) {
 
         //1. 预处理
-        proHandle();
+        proHandle(command);
         //2. 业务操作后 生成entity_event
         List<EntityEvent> entityEvents = doHandle(command);
         //3. 写入流水
@@ -37,23 +37,32 @@ public class CommandHandler implements ICommandHandler {
 
         CommandResult handleResult = new CommandResult();
         //5. 后置处理
-        afterHandle();
+        afterHandle(command, entityEvents);
         return handleResult;
 
     }
 
-    private void proHandle() {
-        //todo 权限检查，参数检查，状态检查等
+    @Override
+    public void afterHandle(Command command, List<EntityEvent> entityEvents) {
     }
 
-
-    private void afterHandle() {
-        //todo
+    @Override
+    public void proHandle(Command command) {
     }
+
+//    private void proHandle() {
+//        //todo 权限检查，参数检查，状态检查等
+//    }
+//
+//
+//    private void afterHandle(entityEvents) {
+//        //todo
+//    }
 
 
     //执行真实业务命令
-    private List<EntityEvent> doHandle(Command command) {
+    @Override
+    public List<EntityEvent> doHandle(Command command) {
         DynamicObject entity = entityRepo.queryOne4Update("entityName");
         //do something biz
         //生成entity_event 用于持久化
