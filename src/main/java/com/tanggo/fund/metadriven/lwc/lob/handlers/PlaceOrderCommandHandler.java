@@ -5,6 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
+import com.tanggo.fund.metadriven.lwc.lob.domain.MatchResult;
 import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
@@ -38,7 +39,7 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
         );
 
         // 提交到订单薄
-        OrderBookService.MatchResult result = orderBookService.placeOrder(order);
+        MatchResult result = orderBookService.placeOrder(order);
 
         // 构造返回结果
         CommandResult cmdResult = new CommandResult();

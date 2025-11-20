@@ -6,16 +6,29 @@
            http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- ========================================
-         OrderBook Service (Core Business Logic)
+         Infrastructure Layer - Repositories
          ======================================== -->
-    <bean id="orderBookService"
-          class="com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService">
+    <bean id="orderBookRepository"
+          class="com.tanggo.fund.metadriven.lwc.lob.infrastructure.repositories.InMemoryOrderBookRepository">
         <description>
-            限价订单薄核心服务
+            订单薄仓储实现（基于内存）
             - 使用TreeMap实现O(log n)性能
             - 支持价格优先、时间优先撮合
             - 无锁化设计满足低时延要求
         </description>
+    </bean>
+
+    <!-- ========================================
+         Application Layer - Services
+         ======================================== -->
+    <bean id="orderBookService"
+          class="com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService">
+        <constructor-arg ref="orderBookRepository"/>
+<!--        <description>-->
+<!--            订单薄应用服务-->
+<!--            - 遵循Clean Architecture依赖倒置原则-->
+<!--            - 依赖仓储接口，不依赖具体实现-->
+<!--        </description>-->
     </bean>
 
     <!-- ========================================

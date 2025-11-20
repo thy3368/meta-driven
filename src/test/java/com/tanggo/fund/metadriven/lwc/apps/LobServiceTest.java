@@ -5,6 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.QueryOrderBookCommand;
+import com.tanggo.fund.metadriven.lwc.lob.domain.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.domain.OrderSide;
 import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
 import com.tanggo.fund.metadriven.lwc.lob.handlers.CancelOrderCommandHandler;
@@ -163,7 +164,7 @@ class LobServiceTest {
         QueryOrderBookCommand queryCommand = new QueryOrderBookCommand(symbol, 5);
         CommandResult queryResult = commandService.handleCommand(queryCommand);
 
-        OrderBookService.OrderBookSnapshot snapshot = (OrderBookService.OrderBookSnapshot) queryResult.getDate();
+        OrderBookSnapshot snapshot = (OrderBookSnapshot) queryResult.getDate();
 
         // 验证
         assertEquals(5, snapshot.getBids().size());
