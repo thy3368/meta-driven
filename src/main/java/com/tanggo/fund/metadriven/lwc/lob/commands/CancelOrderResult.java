@@ -1,4 +1,4 @@
-package com.tanggo.fund.metadriven.lwc.lob.results;
+package com.tanggo.fund.metadriven.lwc.lob.commands;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -7,7 +7,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.MatchResult;
-import com.tanggo.fund.metadriven.lwc.lob.results.PlaceOrderResult;
+import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderResult;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
 import java.util.List;
