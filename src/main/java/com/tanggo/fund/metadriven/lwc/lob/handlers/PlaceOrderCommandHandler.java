@@ -7,7 +7,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.LimitOrder;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.MatchResult;
-import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
+import com.tanggo.fund.metadriven.lwc.lob.results.PlaceOrderResult;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
 import java.util.List;
@@ -26,11 +26,12 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        if (!(command instanceof PlaceOrderCommand)) {
-            throw new IllegalArgumentException("Command must be PlaceOrderCommand");
+        Object param = command.getParam();
+        if (!(param instanceof PlaceOrderCommand)) {
+            throw new IllegalArgumentException("Command param must be PlaceOrderCommand");
         }
 
-        PlaceOrderCommand cmd = (PlaceOrderCommand) command;
+        PlaceOrderCommand cmd = (PlaceOrderCommand) param;
 
         // 创建限价订单
         LimitOrder order = new LimitOrder(
@@ -68,44 +69,5 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
     @Override
     public List<EntityEvent> doHandle(Command command) {
         return List.of();
-    }
-
-    /**
-     * 下单结果DTO
-     */
-    public static class PlaceOrderResult {
-        private boolean success;
-        private LimitOrder order;
-        private java.util.List<Trade> trades;
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public void setSuccess(boolean success) {
-            this.success = success;
-        }
-
-        public LimitOrder getOrder() {
-            return order;
-        }
-
-        public void setOrder(LimitOrder order) {
-            this.order = order;
-        }
-
-        public java.util.List<Trade> getTrades() {
-            return trades;
-        }
-
-        public void setTrades(java.util.List<Trade> trades) {
-            this.trades = trades;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("PlaceOrderResult{success=%s, order=%s, trades=%d}",
-                    success, order, trades != null ? trades.size() : 0);
-        }
     }
 }

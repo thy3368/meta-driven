@@ -5,6 +5,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderCommand;
+import com.tanggo.fund.metadriven.lwc.lob.results.CancelOrderResult;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 
 import java.util.List;
@@ -23,11 +24,12 @@ public class CancelOrderCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        if (!(command instanceof CancelOrderCommand)) {
-            throw new IllegalArgumentException("Command must be CancelOrderCommand");
+        Object param = command.getParam();
+        if (!(param instanceof CancelOrderCommand)) {
+            throw new IllegalArgumentException("Command param must be CancelOrderCommand");
         }
 
-        CancelOrderCommand cmd = (CancelOrderCommand) command;
+        CancelOrderCommand cmd = (CancelOrderCommand) param;
 
         // 执行撤单
         boolean success = orderBookService.cancelOrder(cmd.getSymbol(), cmd.getOrderId());
@@ -55,34 +57,5 @@ public class CancelOrderCommandHandler implements ICommandHandler {
     @Override
     public List<EntityEvent> doHandle(Command command) {
         return List.of();
-    }
-
-    /**
-     * 撤单结果DTO
-     */
-    public static class CancelOrderResult {
-        private boolean success;
-        private String orderId;
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public void setSuccess(boolean success) {
-            this.success = success;
-        }
-
-        public String getOrderId() {
-            return orderId;
-        }
-
-        public void setOrderId(String orderId) {
-            this.orderId = orderId;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("CancelOrderResult{success=%s, orderId=%s}", success, orderId);
-        }
     }
 }

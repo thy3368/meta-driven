@@ -7,5 +7,5 @@ public class Command {
 
     private String methodName;
 
-    private Object inputs;
+    private Object param;
 }

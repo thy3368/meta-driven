@@ -1,6 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.apps;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.CommandService;
+import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
 import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.PlaceOrderCommand;
@@ -8,8 +9,8 @@ import com.tanggo.fund.metadriven.lwc.lob.commands.QueryOrderBookCommand;
 import com.tanggo.fund.metadriven.lwc.lob.domain.repo.OrderBookSnapshot;
 import com.tanggo.fund.metadriven.lwc.lob.domain.OrderSide;
 import com.tanggo.fund.metadriven.lwc.lob.domain.Trade;
-import com.tanggo.fund.metadriven.lwc.lob.handlers.CancelOrderCommandHandler;
-import com.tanggo.fund.metadriven.lwc.lob.handlers.PlaceOrderCommandHandler;
+import com.tanggo.fund.metadriven.lwc.lob.results.CancelOrderResult;
+import com.tanggo.fund.metadriven.lwc.lob.results.PlaceOrderResult;
 import com.tanggo.fund.metadriven.lwc.lob.service.OrderBookService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,12 +37,44 @@ class LobServiceTest {
     private OrderBookService orderBookService;
 
     /**
+     * 辅助方法：创建下单命令
+     */
+    private Command createPlaceOrderCommand(String orderId, String symbol, OrderSide side,
+                                           BigDecimal price, BigDecimal quantity) {
+        Command command = new Command();
+        command.setMethodName("placeOrder");
+        command.setParam(new PlaceOrderCommand(orderId, symbol, side, price, quantity));
+        return command;
+    }
+
+    /**
+     * 辅助方法：创建撤单命令
+     */
+    private Command createCancelOrderCommand(String orderId, String symbol) {
+        Command command = new Command();
+        command.setMethodName("cancelOrder");
+        command.setParam(new CancelOrderCommand(orderId, symbol));
+        return command;
+    }
+
+    /**
+     * 辅助方法：创建查询订单薄命令
+     */
+    private Command createQueryOrderBookCommand(String symbol, Integer depth) {
+        Command command = new Command();
+        command.setMethodName("queryOrderBook");
+        command.setParam(new QueryOrderBookCommand(symbol, depth));
+        return command;
+    }
+
+    /**
      * 测试场景1：基本下单流程
      */
     @Test
     void testPlaceOrder() {
         // 创建买单命令
-        PlaceOrderCommand buyCommand = new PlaceOrderCommand("ORDER-001", "BTCUSDT", OrderSide.BUY, new BigDecimal("50000.00"), new BigDecimal("1.0"));
+        Command buyCommand = createPlaceOrderCommand("ORDER-001", "BTCUSDT", OrderSide.BUY,
+            new BigDecimal("50000.00"), new BigDecimal("1.0"));
 
         // 执行命令
         CommandResult result = commandService.handleCommand(buyCommand);
@@ -49,9 +82,9 @@ class LobServiceTest {
         // 验证结果
         assertNotNull(result);
         assertNotNull(result.getDate());
-        assertInstanceOf(PlaceOrderCommandHandler.PlaceOrderResult.class, result.getDate());
+        assertInstanceOf(PlaceOrderResult.class, result.getDate());
 
-        PlaceOrderCommandHandler.PlaceOrderResult orderResult = (PlaceOrderCommandHandler.PlaceOrderResult) result.getDate();
+        PlaceOrderResult orderResult = (PlaceOrderResult) result.getDate();
 
         assertTrue(orderResult.isSuccess());
         assertEquals("ORDER-001", orderResult.getOrder().getOrderId());
@@ -68,17 +101,19 @@ class LobServiceTest {
         String symbol = "ETHUSDT";
 
         // 1. 先下一个卖单 @ 3000
-        PlaceOrderCommand sellCommand = new PlaceOrderCommand("SELL-001", symbol, OrderSide.SELL, new BigDecimal("3000.00"), new BigDecimal("10.0"));
+        Command sellCommand = createPlaceOrderCommand("SELL-001", symbol, OrderSide.SELL,
+            new BigDecimal("3000.00"), new BigDecimal("10.0"));
         CommandResult sellResult = commandService.handleCommand(sellCommand);
-        PlaceOrderCommandHandler.PlaceOrderResult sellOrderResult = (PlaceOrderCommandHandler.PlaceOrderResult) sellResult.getDate();
+        PlaceOrderResult sellOrderResult = (PlaceOrderResult) sellResult.getDate();
 
         assertEquals(0, sellOrderResult.getTrades().size()); // 无对手盘
         System.out.println("✅ 卖单挂单成功: " + sellOrderResult.getOrder());
 
         // 2. 下一个买单 @ 3000（价格匹配，应该成交）
-        PlaceOrderCommand buyCommand = new PlaceOrderCommand("BUY-001", symbol, OrderSide.BUY, new BigDecimal("3000.00"), new BigDecimal("5.0"));
+        Command buyCommand = createPlaceOrderCommand("BUY-001", symbol, OrderSide.BUY,
+            new BigDecimal("3000.00"), new BigDecimal("5.0"));
         CommandResult buyResult = commandService.handleCommand(buyCommand);
-        PlaceOrderCommandHandler.PlaceOrderResult buyOrderResult = (PlaceOrderCommandHandler.PlaceOrderResult) buyResult.getDate();
+        PlaceOrderResult buyOrderResult = (PlaceOrderResult) buyResult.getDate();
 
         // 验证成交
         assertEquals(1, buyOrderResult.getTrades().size());
@@ -99,13 +134,15 @@ class LobServiceTest {
         String symbol = "BNBUSDT";
 
         // 1. 卖单 100 @ 500
-        PlaceOrderCommand sellCommand = new PlaceOrderCommand("SELL-002", symbol, OrderSide.SELL, new BigDecimal("500.00"), new BigDecimal("100.0"));
+        Command sellCommand = createPlaceOrderCommand("SELL-002", symbol, OrderSide.SELL,
+            new BigDecimal("500.00"), new BigDecimal("100.0"));
         commandService.handleCommand(sellCommand);
 
         // 2. 买单 150 @ 500（只能成交100）
-        PlaceOrderCommand buyCommand = new PlaceOrderCommand("BUY-002", symbol, OrderSide.BUY, new BigDecimal("500.00"), new BigDecimal("150.0"));
+        Command buyCommand = createPlaceOrderCommand("BUY-002", symbol, OrderSide.BUY,
+            new BigDecimal("500.00"), new BigDecimal("150.0"));
         CommandResult buyResult = commandService.handleCommand(buyCommand);
-        PlaceOrderCommandHandler.PlaceOrderResult buyOrderResult = (PlaceOrderCommandHandler.PlaceOrderResult) buyResult.getDate();
+        PlaceOrderResult buyOrderResult = (PlaceOrderResult) buyResult.getDate();
 
         // 验证部分成交
         assertEquals(1, buyOrderResult.getTrades().size());
@@ -125,13 +162,14 @@ class LobServiceTest {
         String symbol = "ADAUSDT";
 
         // 1. 下单
-        PlaceOrderCommand placeCommand = new PlaceOrderCommand("ORDER-CANCEL-001", symbol, OrderSide.BUY, new BigDecimal("1.50"), new BigDecimal("1000.0"));
+        Command placeCommand = createPlaceOrderCommand("ORDER-CANCEL-001", symbol, OrderSide.BUY,
+            new BigDecimal("1.50"), new BigDecimal("1000.0"));
         commandService.handleCommand(placeCommand);
 
         // 2. 撤单
-        CancelOrderCommand cancelCommand = new CancelOrderCommand("ORDER-CANCEL-001", symbol);
+        Command cancelCommand = createCancelOrderCommand("ORDER-CANCEL-001", symbol);
         CommandResult cancelResult = commandService.handleCommand(cancelCommand);
-        CancelOrderCommandHandler.CancelOrderResult cancelOrderResult = (CancelOrderCommandHandler.CancelOrderResult) cancelResult.getDate();
+        CancelOrderResult cancelOrderResult = (CancelOrderResult) cancelResult.getDate();
 
         assertTrue(cancelOrderResult.isSuccess());
         assertEquals("ORDER-CANCEL-001", cancelOrderResult.getOrderId());
@@ -148,20 +186,20 @@ class LobServiceTest {
 
         // 添加多个买单
         for (int i = 1; i <= 5; i++) {
-            PlaceOrderCommand cmd = new PlaceOrderCommand("BUY-" + i, symbol, OrderSide.BUY, new BigDecimal(100 - i),  // 99, 98, 97, 96, 95
-                    new BigDecimal("10.0"));
+            Command cmd = createPlaceOrderCommand("BUY-" + i, symbol, OrderSide.BUY,
+                new BigDecimal(100 - i), new BigDecimal("10.0"));  // 99, 98, 97, 96, 95
             commandService.handleCommand(cmd);
         }
 
         // 添加多个卖单
         for (int i = 1; i <= 5; i++) {
-            PlaceOrderCommand cmd = new PlaceOrderCommand("SELL-" + i, symbol, OrderSide.SELL, new BigDecimal(101 + i),  // 102, 103, 104, 105, 106
-                    new BigDecimal("10.0"));
+            Command cmd = createPlaceOrderCommand("SELL-" + i, symbol, OrderSide.SELL,
+                new BigDecimal(101 + i), new BigDecimal("10.0"));  // 102, 103, 104, 105, 106
             commandService.handleCommand(cmd);
         }
 
         // 查询订单薄
-        QueryOrderBookCommand queryCommand = new QueryOrderBookCommand(symbol, 5);
+        Command queryCommand = createQueryOrderBookCommand(symbol, 5);
         CommandResult queryResult = commandService.handleCommand(queryCommand);
 
         OrderBookSnapshot snapshot = (OrderBookSnapshot) queryResult.getDate();
@@ -190,17 +228,19 @@ class LobServiceTest {
         String symbol = "DOGEUSDT";
 
         // 卖方：在不同价位挂单
-        commandService.handleCommand(new PlaceOrderCommand("SELL-A", symbol, OrderSide.SELL, new BigDecimal("0.10"), new BigDecimal("1000")));
-        commandService.handleCommand(new PlaceOrderCommand("SELL-B", symbol, OrderSide.SELL, new BigDecimal("0.11"), new BigDecimal("2000")));
-        commandService.handleCommand(new PlaceOrderCommand("SELL-C", symbol, OrderSide.SELL, new BigDecimal("0.12"), new BigDecimal("3000")));
+        commandService.handleCommand(createPlaceOrderCommand("SELL-A", symbol, OrderSide.SELL,
+            new BigDecimal("0.10"), new BigDecimal("1000")));
+        commandService.handleCommand(createPlaceOrderCommand("SELL-B", symbol, OrderSide.SELL,
+            new BigDecimal("0.11"), new BigDecimal("2000")));
+        commandService.handleCommand(createPlaceOrderCommand("SELL-C", symbol, OrderSide.SELL,
+            new BigDecimal("0.12"), new BigDecimal("3000")));
 
         // 买方：市价吃单（价格设置很高，能吃掉所有卖单）
-        PlaceOrderCommand bigBuyOrder = new PlaceOrderCommand("BUY-BIG", symbol, OrderSide.BUY, new BigDecimal("0.15"),  // 高于所有卖单价格
-                new BigDecimal("5000")   // 数量足够吃掉前两档
-        );
+        Command bigBuyOrder = createPlaceOrderCommand("BUY-BIG", symbol, OrderSide.BUY,
+            new BigDecimal("0.15"), new BigDecimal("5000"));  // 高于所有卖单价格，数量足够吃掉前两档
 
         CommandResult result = commandService.handleCommand(bigBuyOrder);
-        PlaceOrderCommandHandler.PlaceOrderResult orderResult = (PlaceOrderCommandHandler.PlaceOrderResult) result.getDate();
+        PlaceOrderResult orderResult = (PlaceOrderResult) result.getDate();
 
         // 应该有3笔成交（吃掉3档卖单）
         assertEquals(3, orderResult.getTrades().size());
@@ -226,13 +266,16 @@ class LobServiceTest {
         String symbol = "LINKUSDT";
 
         // 同一价格，时间优先
-        commandService.handleCommand(new PlaceOrderCommand("SELL-TIME-1", symbol, OrderSide.SELL, new BigDecimal("20.00"), new BigDecimal("10")));
-        commandService.handleCommand(new PlaceOrderCommand("SELL-TIME-2", symbol, OrderSide.SELL, new BigDecimal("20.00"), new BigDecimal("10")));
+        commandService.handleCommand(createPlaceOrderCommand("SELL-TIME-1", symbol, OrderSide.SELL,
+            new BigDecimal("20.00"), new BigDecimal("10")));
+        commandService.handleCommand(createPlaceOrderCommand("SELL-TIME-2", symbol, OrderSide.SELL,
+            new BigDecimal("20.00"), new BigDecimal("10")));
 
         // 买单匹配
-        PlaceOrderCommand buyCommand = new PlaceOrderCommand("BUY-TIME", symbol, OrderSide.BUY, new BigDecimal("20.00"), new BigDecimal("5"));
+        Command buyCommand = createPlaceOrderCommand("BUY-TIME", symbol, OrderSide.BUY,
+            new BigDecimal("20.00"), new BigDecimal("5"));
         CommandResult result = commandService.handleCommand(buyCommand);
-        PlaceOrderCommandHandler.PlaceOrderResult orderResult = (PlaceOrderCommandHandler.PlaceOrderResult) result.getDate();
+        PlaceOrderResult orderResult = (PlaceOrderResult) result.getDate();
 
         // 应该只匹配第一个卖单（时间优先）
         assertEquals(1, orderResult.getTrades().size());

@@ -24,11 +24,12 @@ public class QueryOrderBookCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        if (!(command instanceof QueryOrderBookCommand)) {
-            throw new IllegalArgumentException("Command must be QueryOrderBookCommand");
+        Object param = command.getParam();
+        if (!(param instanceof QueryOrderBookCommand)) {
+            throw new IllegalArgumentException("Command param must be QueryOrderBookCommand");
         }
 
-        QueryOrderBookCommand cmd = (QueryOrderBookCommand) command;
+        QueryOrderBookCommand cmd = (QueryOrderBookCommand) param;
 
         // 查询订单薄快照
         int depth = cmd.getDepth() != null ? cmd.getDepth() : 10;
