@@ -32,12 +32,12 @@ public class DClass {
     /**
      * 调用方法（支持实例方法和静态方法）
      * 新架构：委托给DMethod的invoke方法，由ExecutionEngine执行
-     * @param dynamicObject 动态对象实例（静态方法时为null）
+     * @param dObject 动态对象实例（静态方法时为null）
      * @param funcName 方法名
      * @param inputs 输入参数
      * @return 执行结果
      */
-    public Object callStaticMethod2(DynamicObject dynamicObject, String funcName, Object inputs) {
+    public Object callStaticMethod2(DObject dObject, String funcName, Object inputs) {
         // 1. 验证方法名
         if (funcName == null || funcName.isBlank()) {
             throw new IllegalArgumentException("方法名不能为空");
@@ -57,8 +57,8 @@ public class DClass {
      * 创建动态对象实例
      * @return 新的DynamicObject实例
      */
-    public DynamicObject createObject() {
-        DynamicObject object = new DynamicObject();
+    public DObject createObject() {
+        DObject object = new DObject();
         object.setDclass(this);
         return object;
     }

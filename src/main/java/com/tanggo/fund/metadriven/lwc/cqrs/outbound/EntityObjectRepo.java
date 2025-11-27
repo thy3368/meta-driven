@@ -7,7 +7,7 @@ import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DObject;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -356,13 +356,13 @@ public class EntityObjectRepo implements IEntityObjectRepo {
      * TODO: 实现查询逻辑
      */
     @Override
-    public DynamicObject queryOne4Update(String entityName) {
+    public DObject queryOne4Update(String entityName) {
         // TODO: 实现查询逻辑
         return null;
     }
 
     @Override
-    public DynamicObject queryOne(String entityName) {
+    public DObject queryOne(String entityName) {
         return null;
     }
 

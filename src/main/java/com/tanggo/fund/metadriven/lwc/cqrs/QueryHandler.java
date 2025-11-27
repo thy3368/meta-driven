@@ -2,7 +2,7 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 
 
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,7 +56,7 @@ public class QueryHandler implements ICommandHandler {
 
     //执行真实业务命令
     private CommandResult doQuery(Command command) {
-        DynamicObject entity = entityRepo.queryOne("entityName");
+        DObject entity = entityRepo.queryOne("entityName");
         //do something biz
         //生成entity_event 用于持久化
         CommandResult result = new CommandResult();

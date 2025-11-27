@@ -3,7 +3,7 @@ package com.tanggo.fund.metadriven.lwc.orm;
 
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DObject;
 
 /**
  * DProperty的ORM元数据提取器
@@ -68,7 +68,7 @@ public class DPropertyOrmMetadata {
      * @return 如果是动态对象关系返回true，否则返回false
      */
     public boolean isDynamicObjectRelation() {
-        return property.getJavaType() == DynamicObject.class;
+        return property.getJavaType() == DObject.class;
     }
 
     /**

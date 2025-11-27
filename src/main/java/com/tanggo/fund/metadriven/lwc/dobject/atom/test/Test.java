@@ -5,7 +5,7 @@ package com.tanggo.fund.metadriven.lwc.dobject.atom.test;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DMethod;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,16 +16,16 @@ public class Test {
 
         DClass mclass = new DClass();
         mclass.setName("entity-user");
-        DynamicObject dynamicObject2 = mclass.createObject();
+        DObject dObject2 = mclass.createObject();
 
-        DynamicObject dynamicObject = new DynamicObject();
-        dynamicObject.setDclass(mclass);
+        DObject dObject = new DObject();
+        dObject.setDclass(mclass);
 
-        DynamicObject inputs = new DynamicObject();
+        DObject inputs = new DObject();
 
-        Object object = dynamicObject.callMethod("func2", inputs);
-        dynamicObject.setValue("key", 3);
-        int num = (int) dynamicObject.getValue("key");
+        Object object = dObject.callMethod("func2", inputs);
+        dObject.setValue("key", 3);
+        int num = (int) dObject.getValue("key");
 
         Object object2 = mclass.callStaticMethod("func2", inputs);
 
@@ -60,15 +60,15 @@ public class Test {
 
         mclass.getPropertyList().add(userId);
 
-        DynamicObject dynamicObject = mclass.createObject();
+        DObject dObject = mclass.createObject();
         //验证setValue
-        dynamicObject.setValue("amount", 123);
-        dynamicObject.setValue("userId", "userId");
-        dynamicObject.setValue("addresses", addresses);
+        dObject.setValue("amount", 123);
+        dObject.setValue("userId", "userId");
+        dObject.setValue("addresses", addresses);
 
-        int amount222 = (int) dynamicObject.getValue("amount");
-        String userId2 = (String) dynamicObject.getValue("userId");
-        addresses = (List<String>) dynamicObject.getValue("addresses");
+        int amount222 = (int) dObject.getValue("amount");
+        String userId2 = (String) dObject.getValue("userId");
+        addresses = (List<String>) dObject.getValue("addresses");
 
 
     }
@@ -84,15 +84,15 @@ public class Test {
         DProperty item = new DProperty();
         item.setName("orderItems");
         item.setCollectionType(ArrayList.class);
-        item.setJavaType(DynamicObject.class);
+        item.setJavaType(DObject.class);
         item.setDynamicObjectType(itemClass);
 
-        DynamicObject dynamicObject = header.createObject();
-        List<DynamicObject> items = (List<DynamicObject>) dynamicObject.getValue("orderItems");
+        DObject dObject = header.createObject();
+        List<DObject> items = (List<DObject>) dObject.getValue("orderItems");
 
 
         //验证 setValue的验证
-        dynamicObject.setValue("orderItems", items);
+        dObject.setValue("orderItems", items);
 
 
     }

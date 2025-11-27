@@ -3,7 +3,7 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.EntityEventRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.DObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -60,7 +60,7 @@ public class CommandHandler implements ICommandHandler {
     //执行真实业务命令
     @Override
     public List<EntityEvent> doHandle(Command command) {
-        DynamicObject entity = entityRepo.queryOne4Update("entityName");
+        DObject entity = entityRepo.queryOne4Update("entityName");
         //do something biz
         //生成entity_event 用于持久化
         return Collections.singletonList(new EntityEvent());

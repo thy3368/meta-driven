@@ -7,7 +7,7 @@ import java.util.Map;
 
 @Data
 //todo 只有动态对象才需要MEntity描述
-public class DynamicObject {
+public class DObject {
 
     private Map<String, Object> data = new HashMap<>();
 
@@ -24,7 +24,7 @@ public class DynamicObject {
 
     private void validateInput(String func2, Object inputs) {
 
-        if (inputs instanceof DynamicObject) {
+        if (inputs instanceof DObject) {
 
         } else {
 
@@ -62,8 +62,8 @@ public class DynamicObject {
             Class<?> expectedType = property.getJavaType();
 
             // 处理DynamicObject类型
-            if (expectedType == DynamicObject.class) {
-                if (!(object instanceof DynamicObject)) {
+            if (expectedType == DObject.class) {
+                if (!(object instanceof DObject)) {
                     throw new IllegalArgumentException(
                         String.format("属性 %s 期望 DynamicObject 类型，实际: %s",
                             key, object.getClass().getName())
@@ -71,7 +71,7 @@ public class DynamicObject {
                 }
                 // 验证DynamicObject的具体类型
                 if (property.getDynamicObjectType() != null) {
-                    DynamicObject dynValue = (DynamicObject) object;
+                    DObject dynValue = (DObject) object;
                     String expectedTypeName = property.getDynamicObjectType().getName();
                     String actualTypeName = dynValue.getDclass() != null ?
                         dynValue.getDclass().getName() : "null";

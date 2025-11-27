@@ -67,8 +67,8 @@ class DMethodIntegrationTest {
     @Test
     void testDynamicObjectInputOutput() {
         DMethod dMethod = new DMethod();
-        dMethod.setInput(DynamicObject.class);
-        dMethod.setOutput(DynamicObject.class);
+        dMethod.setInput(DObject.class);
+        dMethod.setOutput(DObject.class);
 
         DClass inputClass = new DClass();
         inputClass.setName("InputDO");

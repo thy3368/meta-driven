@@ -33,11 +33,11 @@ public class DMethod {
 
     public boolean inputIsDynamic() {
         // 修复：判断input是否是DynamicObject类型，而不是判断Class对象本身
-        return input != null && input.equals(DynamicObject.class);
+        return input != null && input.equals(DObject.class);
     }
 
     public boolean outputIsDynamic() {
-        return output != null && output.equals(DynamicObject.class);
+        return output != null && output.equals(DObject.class);
     }
 
     /**
@@ -73,7 +73,7 @@ public class DMethod {
      * 验证输入参数类型
      */
     private void validateInput(Object inputs) {
-        if (inputs instanceof DynamicObject dynInput) {
+        if (inputs instanceof DObject dynInput) {
             if (mInput != null) {
                 String expectedType = mInput.getName();
                 String actualType = dynInput.getDclass().getName();
