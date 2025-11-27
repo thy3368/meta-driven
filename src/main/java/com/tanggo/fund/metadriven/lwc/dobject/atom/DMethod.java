@@ -28,6 +28,9 @@ public class DMethod {
     private String scriptFilePath; // 例如: "scripts/abc.groovy", 会自动检测脚本类型
     private String scriptType; // java, groovy, dsl等
 
+    // 执行引擎仓储 - 延迟初始化
+    private transient ExecutionEngineRepo executionEngineRepo;
+
     public boolean inputIsDynamic() {
         // 修复：判断input是否是DynamicObject类型，而不是判断Class对象本身
         return input != null && input.equals(DynamicObject.class);
@@ -42,5 +45,79 @@ public class DMethod {
      */
     public boolean hasJavaMethod() {
         return javaMethod != null;
+    }
+
+    /**
+     * 执行方法调用 - 使用 ExecutionEngine 策略模式
+     * @param inputs 输入参数
+     * @return 执行结果
+     */
+    public Object invoke(Object inputs) {
+        // 1. 验证输入参数
+        validateInput(inputs);
+
+        // 2. 构建执行上下文
+        ExecutionContext context = buildExecutionContext();
+
+        // 3. 获取或初始化引擎仓储
+        ExecutionEngineRepo repo = getOrCreateEngineRepo();
+
+        // 4. 自动选择合适的执行引擎
+        ExecutionEngine engine = repo.findEngine(context);
+
+        // 5. 执行调用
+        return engine.invoke(inputs, context);
+    }
+
+    /**
+     * 验证输入参数类型
+     */
+    private void validateInput(Object inputs) {
+        if (inputs instanceof DynamicObject dynInput) {
+            if (mInput != null) {
+                String expectedType = mInput.getName();
+                String actualType = dynInput.getDclass().getName();
+                if (!expectedType.equals(actualType)) {
+                    throw new IllegalArgumentException(
+                        String.format("输入类型不匹配: 期望 %s，实际 %s", expectedType, actualType)
+                    );
+                }
+            }
+        } else if (input != null && inputs != null) {
+            if (!input.isInstance(inputs)) {
+                throw new IllegalArgumentException(
+                    String.format("输入类型不匹配: 期望 %s，实际 %s",
+                        input.getName(), inputs.getClass().getName())
+                );
+            }
+        }
+    }
+
+    /**
+     * 构建执行上下文
+     */
+    private ExecutionContext buildExecutionContext() {
+        return ExecutionContext.builder()
+            .type(scriptType)
+            .javaMethod(javaMethod)
+            .declaringClass(declaringClass)
+            .scriptClassName(scriptClassName)
+            .scriptFilePath(scriptFilePath)
+            .methodName(name)
+            .inputType(input)
+            .outputType(output)
+            .dynamicInputType(mInput)
+            .dynamicOutputType(mOutput)
+            .build();
+    }
+
+    /**
+     * 获取或创建引擎仓储（延迟初始化）
+     */
+    private ExecutionEngineRepo getOrCreateEngineRepo() {
+        if (executionEngineRepo == null) {
+            executionEngineRepo = new ExecutionEngineRepo();
+        }
+        return executionEngineRepo;
     }
 }

@@ -1,8 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.apps;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.CommandService;
-import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
-import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
+import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,11 +16,11 @@ class QueryServiceTest {
     @Test
     void testCommonHandle() {
 
-        Command command = new Command();
+        ICommandHandler.Command command = new ICommandHandler.Command();
 
 
-        CommandResult commandResult = commandService.handleCommand(command);
-        CommandResult queryResult = commandService.handleQuery(command);
+        ICommandHandler.CommandResult commandResult = commandService.handleCommand(command);
+        ICommandHandler.CommandResult queryResult = commandService.handleQuery(command);
 
     }
 }

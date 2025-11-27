@@ -3,8 +3,6 @@ package com.tanggo.fund.metadriven.lwc.cqrs;
 
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandHandlerRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.CommandRepo;
-import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
-import com.tanggo.fund.metadriven.lwc.cqrs.types.CommandResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +16,7 @@ public class CommandService {
     private CommandHandlerRepo commandHandlerRepo;
 
 
-    public CommandResult  handleCommand(Command command) {
+    public ICommandHandler.CommandResult handleCommand(ICommandHandler.Command command) {
 
 //        commandRepo.insert(command);
         ICommandHandler handler = commandHandlerRepo.queryCommandHandler(command.getMethodName());
@@ -28,7 +26,7 @@ public class CommandService {
     }
 
 
-    public CommandResult handleQuery(Command command) {
+    public ICommandHandler.CommandResult handleQuery(ICommandHandler.Command command) {
 
 //        commandRepo.insert(command);
         ICommandHandler handler = commandHandlerRepo.queryQueryHandler(command.getMethodName());

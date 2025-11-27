@@ -1,13 +1,13 @@
 package com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait;
 
 
-import com.tanggo.fund.metadriven.lwc.cqrs.types.Command;
+import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
 
 public interface ICommandRepo extends IRepository {
 
 
-    void insert(Command command);
+    void insert(ICommandHandler.Command command);
 
 
-    Command queryById(String id);
+    ICommandHandler.Command queryById(String id);
 }

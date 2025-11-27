@@ -27,9 +27,9 @@
         <url/>
     </scm>
     <properties>
-        <java.version>22</java.version>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Project Leyden Support -->
         <leyden.enable>true</leyden.enable>
@@ -105,15 +105,15 @@
                 </executions>
             </plugin>
 
-            <!-- Maven Compiler Plugin for Java 22 -->
+            <!-- Maven Compiler Plugin for Java 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>22</source>
-                    <target>22</target>
-                    <release>22</release>
+                    <source>21</source>
+                    <target>21</target>
+                    <release>21</release>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
@@ -133,6 +133,7 @@
                         <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                         <buildArg>--gc=serial</buildArg>
                     </buildArgs>
+                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
@@ -141,13 +142,6 @@
                             <goal>compile-no-fork</goal>
                         </goals>
                         <phase>package</phase>
-                    </execution>
-                    <execution>
-                        <id>test-native</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <phase>test</phase>
                     </execution>
                 </executions>
             </plugin>

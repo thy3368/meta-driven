@@ -1,13 +1,13 @@
 package com.tanggo.fund.metadriven.lwc.cqrs.outbound;
 
 
+import com.tanggo.fund.metadriven.lwc.cqrs.ICommandHandler;
+import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityMetaRepo;
 import com.tanggo.fund.metadriven.lwc.cqrs.outbound.trait.IEntityObjectRepo;
-import com.tanggo.fund.metadriven.lwc.cqrs.types.EntityEvent;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DAnnotation;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DClass;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DProperty;
 import com.tanggo.fund.metadriven.lwc.dobject.atom.DynamicObject;
-import com.tanggo.fund.metadriven.lwc.domain.meta.registry.DClassRegistry;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -24,6 +24,12 @@ import java.util.List;
 @Repository
 public class EntityObjectRepo implements IEntityObjectRepo {
 
+    // 注入实体元数据仓储
+    private final IEntityMetaRepo entityMetaRepo;
+
+    public EntityObjectRepo(IEntityMetaRepo entityMetaRepo) {
+        this.entityMetaRepo = entityMetaRepo;
+    }
 
     /**
      * 处理实体事件 - 完整版本
@@ -50,7 +56,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
      * @throws EntityRepositoryException 如果处理失败
      */
     @Override
-    public void process(EntityEvent entityEvent) {
+    public void process(ICommandHandler.EntityEvent entityEvent) {
         // 性能监控：开始时间（纳秒级精度）
         long startTimeNanos = System.nanoTime();
 
@@ -88,7 +94,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 验证EntityEvent有效性
      */
-    private void validateEntityEvent(EntityEvent entityEvent) {
+    private void validateEntityEvent(ICommandHandler.EntityEvent entityEvent) {
         if (entityEvent == null) {
             throw new IllegalArgumentException("EntityEvent不能为null");
         }
@@ -110,10 +116,13 @@ public class EntityObjectRepo implements IEntityObjectRepo {
      * 查找DClass元数据
      */
     private DClass findDClass(String entityName) {
-        DClass dClass = DClassRegistry.INSTANCE.findByName(entityName);
+        DClass dClass = entityMetaRepo.findByName(entityName);
 
         if (dClass == null) {
-            throw new IllegalArgumentException("未找到实体类定义: " + entityName + "，请先将DClass注册到DClassRegistry中。" + "\n提示: 使用 DClassRegistry.INSTANCE.register(dClass) 进行注册");
+            throw new IllegalArgumentException(
+                "未找到实体类定义: " + entityName + "，请先将DClass注册到EntityMetaRepo中。" +
+                "\n提示: 使用 entityMetaRepo.insert(dClass) 进行注册"
+            );
         }
 
         return dClass;
@@ -122,7 +131,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 记录性能指标
      */
-    private void logPerformance(EntityEvent entityEvent, long durationNanos, ExecutionResult result) {
+    private void logPerformance(ICommandHandler.EntityEvent entityEvent, long durationNanos, ExecutionResult result) {
         // 转换为微秒
         double durationMicros = durationNanos / 1000.0;
 
@@ -135,7 +144,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     }
 
     @Override
-    public void replay(List<EntityEvent> entityEvents) {
+    public void replay(List<ICommandHandler.EntityEvent> entityEvents) {
         //todo
     }
 
@@ -177,7 +186,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 根据EntityEvent和DClass生成SQL语句
      */
-    private String generate(EntityEvent entityEvent, DClass dClass) {
+    private String generate(ICommandHandler.EntityEvent entityEvent, DClass dClass) {
         // 获取表名
         String tableName = getTableName(dClass);
 
@@ -218,12 +227,12 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 生成INSERT SQL语句
      */
-    private String generateInsertSql(EntityEvent entityEvent, DClass dClass, String tableName) {
+    private String generateInsertSql(ICommandHandler.EntityEvent entityEvent, DClass dClass, String tableName) {
         List<String> columns = new ArrayList<>();
         List<String> values = new ArrayList<>();
 
         // 遍历所有字段变更，构建INSERT语句
-        for (EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
+        for (ICommandHandler.EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
             String columnName = getColumnName(dClass, fieldChange.getFieldName());
             columns.add(columnName);
             values.add(formatValue(fieldChange.getNewValue()));
@@ -235,11 +244,11 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 生成UPDATE SQL语句
      */
-    private String generateUpdateSql(EntityEvent entityEvent, DClass dClass, String tableName) {
+    private String generateUpdateSql(ICommandHandler.EntityEvent entityEvent, DClass dClass, String tableName) {
         List<String> setClauses = new ArrayList<>();
 
         // 只更新实际变更的字段
-        for (EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
+        for (ICommandHandler.EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
             if (fieldChange.hasChanged() && !isIdField(dClass, fieldChange.getFieldName())) {
                 String columnName = getColumnName(dClass, fieldChange.getFieldName());
                 String value = formatValue(fieldChange.getNewValue());
@@ -256,7 +265,7 @@ public class EntityObjectRepo implements IEntityObjectRepo {
     /**
      * 生成DELETE SQL语句
      */
-    private String generateDeleteSql(EntityEvent entityEvent, DClass dClass, String tableName) {
+    private String generateDeleteSql(ICommandHandler.EntityEvent entityEvent, DClass dClass, String tableName) {
         // 获取主键列名
         String idColumnName = getIdColumnName(dClass);
 
