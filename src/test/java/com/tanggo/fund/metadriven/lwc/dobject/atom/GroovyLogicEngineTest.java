@@ -1,6 +1,6 @@
 package com.tanggo.fund.metadriven.lwc.dobject.atom;
 
-import com.tanggo.fund.metadriven.lwc.dobject.atom.impl.GroovyExecutionEngine;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.impl.GroovyLogicEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,34 +16,34 @@ import static org.junit.jupiter.api.Assertions.*;
  * 精简版 - 只保留最有代表性的测试用例
  */
 @SpringBootTest
-class GroovyExecutionEngineTest {
+class GroovyLogicEngineTest {
 
-    private GroovyExecutionEngine engine;
-    private ExecutionEngineRepo repo;
+    private GroovyLogicEngine engine;
+    private LogicEngineRepo repo;
 
     @TempDir
     Path tempDir;
 
     @BeforeEach
     void setUp() {
-        engine = new GroovyExecutionEngine();
-        repo = new ExecutionEngineRepo();
+        engine = new GroovyLogicEngine();
+        repo = new LogicEngineRepo();
     }
 
     @Test
     void testSupportsOnlyGroovyFiles() {
         // 支持 .groovy 文件
-        assertTrue(engine.supports(ExecutionContext.builder()
+        assertTrue(engine.supports(LogicContext.builder()
             .scriptFilePath("test.groovy").build()));
 
         // 支持 .gvy 文件
-        assertTrue(engine.supports(ExecutionContext.builder()
+        assertTrue(engine.supports(LogicContext.builder()
             .scriptFilePath("test.gvy").build()));
 
         // 不支持其他类型
-        assertFalse(engine.supports(ExecutionContext.builder()
+        assertFalse(engine.supports(LogicContext.builder()
             .scriptFilePath("test.java").build()));
-        assertFalse(engine.supports(ExecutionContext.builder()
+        assertFalse(engine.supports(LogicContext.builder()
             .type("groovy").build()));  // 没有文件路径
     }
 
@@ -53,7 +53,7 @@ class GroovyExecutionEngineTest {
         Path scriptPath = tempDir.resolve("calculate.groovy");
         Files.writeString(scriptPath, scriptContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(scriptPath.toString())
             .build();
 
@@ -67,7 +67,7 @@ class GroovyExecutionEngineTest {
         Path scriptPath = tempDir.resolve("calculateTotal.groovy");
         Files.writeString(scriptPath, scriptContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(scriptPath.toString())
             .build();
 
@@ -90,7 +90,7 @@ class GroovyExecutionEngineTest {
         Path scriptPath = tempDir.resolve("transform.groovy");
         Files.writeString(scriptPath, scriptContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(scriptPath.toString())
             .build();
 
@@ -109,12 +109,12 @@ class GroovyExecutionEngineTest {
         Path scriptPath = tempDir.resolve("multiply.groovy");
         Files.writeString(scriptPath, scriptContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(scriptPath.toString())
             .build();
 
         // 通过仓储自动选择引擎
-        ExecutionEngine foundEngine = repo.findEngine(context);
+        LogicEngine foundEngine = repo.findEngine(context);
         assertEquals("groovy", foundEngine.getType());
 
         Object result = foundEngine.invoke(7, context);
@@ -124,7 +124,7 @@ class GroovyExecutionEngineTest {
     @Test
     void testErrorHandling() throws Exception {
         // 文件不存在
-        ExecutionContext notFoundContext = ExecutionContext.builder()
+        LogicContext notFoundContext = LogicContext.builder()
             .scriptFilePath("/non/existent/script.groovy")
             .build();
 
@@ -137,7 +137,7 @@ class GroovyExecutionEngineTest {
         Path errorPath = tempDir.resolve("error.groovy");
         Files.writeString(errorPath, errorScript);
 
-        ExecutionContext errorContext = ExecutionContext.builder()
+        LogicContext errorContext = LogicContext.builder()
             .scriptFilePath(errorPath.toString())
             .build();
 

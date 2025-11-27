@@ -1,17 +1,17 @@
 package com.tanggo.fund.metadriven.lwc.dobject.atom.impl;
 
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionContext;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionEngine;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicContext;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicEngine;
 
 import java.lang.reflect.InvocationTargetException;
 
 /**
  * Java 方法执行引擎 - 基于反射调用
  */
-public class JavaMethodExecutionEngine implements ExecutionEngine {
+public class JavaMethodLogicEngine implements LogicEngine {
 
     @Override
-    public Object invoke(Object inputs, ExecutionContext context) {
+    public Object invoke(Object inputs, LogicContext context) {
         try {
             var javaMethod = context.getJavaMethod();
             if (javaMethod == null) {
@@ -45,7 +45,7 @@ public class JavaMethodExecutionEngine implements ExecutionEngine {
     }
 
     @Override
-    public boolean supports(ExecutionContext context) {
+    public boolean supports(LogicContext context) {
         return context.getJavaMethod() != null;
     }
 

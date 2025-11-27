@@ -1,6 +1,6 @@
 package com.tanggo.fund.metadriven.lwc.dobject.atom;
 
-import com.tanggo.fund.metadriven.lwc.dobject.atom.impl.BpmnExecutionEngine;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.impl.BpmnLogicEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,34 +16,34 @@ import static org.junit.jupiter.api.Assertions.*;
  * BpmnExecutionEngine 集成测试
  */
 @SpringBootTest
-class BpmnExecutionEngineTest {
+class BpmnLogicEngineTest {
 
-    private BpmnExecutionEngine engine;
-    private ExecutionEngineRepo repo;
+    private BpmnLogicEngine engine;
+    private LogicEngineRepo repo;
 
     @TempDir
     Path tempDir;
 
     @BeforeEach
     void setUp() {
-        engine = new BpmnExecutionEngine();
-        repo = new ExecutionEngineRepo();
+        engine = new BpmnLogicEngine();
+        repo = new LogicEngineRepo();
     }
 
     @Test
     void testSupportsOnlyBpmnFiles() {
         // 支持 .bpmn 文件
-        assertTrue(engine.supports(ExecutionContext.builder()
+        assertTrue(engine.supports(LogicContext.builder()
             .scriptFilePath("process.bpmn").build()));
 
         // 支持 .bpmn20.xml 文件
-        assertTrue(engine.supports(ExecutionContext.builder()
+        assertTrue(engine.supports(LogicContext.builder()
             .scriptFilePath("process.bpmn20.xml").build()));
 
         // 不支持其他类型
-        assertFalse(engine.supports(ExecutionContext.builder()
+        assertFalse(engine.supports(LogicContext.builder()
             .scriptFilePath("process.xml").build()));
-        assertFalse(engine.supports(ExecutionContext.builder()
+        assertFalse(engine.supports(LogicContext.builder()
             .type("bpmn").build()));  // 没有文件路径
     }
 
@@ -63,7 +63,7 @@ class BpmnExecutionEngineTest {
         Path bpmnPath = tempDir.resolve("orderProcess.bpmn");
         Files.writeString(bpmnPath, bpmnContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(bpmnPath.toString())
             .methodName("orderProcess")
             .build();
@@ -96,7 +96,7 @@ class BpmnExecutionEngineTest {
         Path bpmnPath = tempDir.resolve("payment.bpmn");
         Files.writeString(bpmnPath, bpmnContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(bpmnPath.toString())
             .methodName("paymentProcess")
             .build();
@@ -133,12 +133,12 @@ class BpmnExecutionEngineTest {
         Path bpmnPath = tempDir.resolve("approval.bpmn");
         Files.writeString(bpmnPath, bpmnContent);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(bpmnPath.toString())
             .build();
 
         // 通过仓储自动选择引擎
-        ExecutionEngine foundEngine = repo.findEngine(context);
+        LogicEngine foundEngine = repo.findEngine(context);
         assertEquals("bpmn", foundEngine.getType());
 
         Object result = foundEngine.invoke(null, context);
@@ -147,7 +147,7 @@ class BpmnExecutionEngineTest {
 
     @Test
     void testBpmnFileNotFound() {
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath("/non/existent/process.bpmn")
             .build();
 
@@ -163,7 +163,7 @@ class BpmnExecutionEngineTest {
         Path bpmnPath = tempDir.resolve("invalid.bpmn");
         Files.writeString(bpmnPath, invalidBpmn);
 
-        ExecutionContext context = ExecutionContext.builder()
+        LogicContext context = LogicContext.builder()
             .scriptFilePath(bpmnPath.toString())
             .build();
 

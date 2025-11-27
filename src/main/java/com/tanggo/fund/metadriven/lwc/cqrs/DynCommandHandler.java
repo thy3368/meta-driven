@@ -1,7 +1,8 @@
 package com.tanggo.fund.metadriven.lwc.cqrs;
 
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionEngine;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionEngineRepo;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicEngine;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicEngineRepo;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicContext;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderCommand;
 import com.tanggo.fund.metadriven.lwc.lob.commands.CancelOrderResult;
 
@@ -16,7 +17,7 @@ public class DynCommandHandler implements ICommandHandler {
 
     private String code;
 
-    private ExecutionEngineRepo executionEngineRepo;
+    private LogicEngineRepo logicEngineRepo;
 
 
     @Override
@@ -27,18 +28,18 @@ public class DynCommandHandler implements ICommandHandler {
         }
 
         // 获取执行引擎
-        ExecutionEngine executionEngine = executionEngineRepo.query(type);
+        LogicEngine logicEngine = logicEngineRepo.query(type);
 
         // 构建执行上下文
-        com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionContext context =
-            com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionContext.builder()
+        LogicContext context =
+            LogicContext.builder()
                 .type(type)
                 .scriptCode(code)
                 .methodName("handle")
                 .build();
 
         // 执行命令
-        Object result = executionEngine.invoke(command, context);
+        Object result = logicEngine.invoke(command, context);
 
         // 构造返回结果
         CommandResult cmdResult = (result instanceof CommandResult)

@@ -1,7 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.dobject.atom.impl;
 
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionContext;
-import com.tanggo.fund.metadriven.lwc.dobject.atom.ExecutionEngine;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicContext;
+import com.tanggo.fund.metadriven.lwc.dobject.atom.LogicEngine;
 
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -13,13 +13,13 @@ import java.nio.file.Path;
  * Groovy 脚本执行引擎
  * 使用 JSR-223 标准脚本引擎接口执行 Groovy 脚本
  */
-public class GroovyExecutionEngine implements ExecutionEngine {
+public class GroovyLogicEngine implements LogicEngine {
 
     // 脚本引擎管理器（单例模式，提高性能）
     private static final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 
     @Override
-    public Object invoke(Object inputs, ExecutionContext context) {
+    public Object invoke(Object inputs, LogicContext context) {
         try {
             // 1. 读取 Groovy 脚本文件
             String scriptContent = readScriptFile(context.getScriptFilePath());
@@ -60,7 +60,7 @@ public class GroovyExecutionEngine implements ExecutionEngine {
     }
 
     @Override
-    public boolean supports(ExecutionContext context) {
+    public boolean supports(LogicContext context) {
         // 检查是否有脚本文件路径且为 .groovy 或 .gvy 文件
         if (context.getScriptFilePath() == null || context.getScriptFilePath().isBlank()) {
             return false;

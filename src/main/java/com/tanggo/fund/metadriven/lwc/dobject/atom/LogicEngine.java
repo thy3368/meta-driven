@@ -4,7 +4,7 @@ package com.tanggo.fund.metadriven.lwc.dobject.atom;
  * 执行引擎接口 - 策略模式
  * 每种执行类型对应一个具体实现
  */
-public interface ExecutionEngine {
+public interface LogicEngine {
 
     /**
      * 执行方法调用
@@ -12,7 +12,7 @@ public interface ExecutionEngine {
      * @param context 执行上下文（包含代码、方法信息等）
      * @return 执行结果
      */
-    Object invoke(Object inputs, ExecutionContext context);
+    Object invoke(Object inputs, LogicContext context);
 
     /**
      * 获取引擎支持的类型
@@ -25,5 +25,5 @@ public interface ExecutionEngine {
      * @param context 执行上下文
      * @return true 如果支持
      */
-    boolean supports(ExecutionContext context);
+    boolean supports(LogicContext context);
 }

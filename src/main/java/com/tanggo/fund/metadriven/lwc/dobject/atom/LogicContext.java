@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  */
 @Data
 @Builder
-public class ExecutionContext {
+public class LogicContext {
 
     /**
      * 执行类型: java, groovy, compiled, script

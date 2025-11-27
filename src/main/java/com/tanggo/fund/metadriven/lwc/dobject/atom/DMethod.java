@@ -29,7 +29,7 @@ public class DMethod {
     private String scriptType; // java, groovy, dsl等
 
     // 执行引擎仓储 - 延迟初始化
-    private transient ExecutionEngineRepo executionEngineRepo;
+    private transient LogicEngineRepo logicEngineRepo;
 
     public boolean inputIsDynamic() {
         // 修复：判断input是否是DynamicObject类型，而不是判断Class对象本身
@@ -57,13 +57,13 @@ public class DMethod {
         validateInput(inputs);
 
         // 2. 构建执行上下文
-        ExecutionContext context = buildExecutionContext();
+        LogicContext context = buildExecutionContext();
 
         // 3. 获取或初始化引擎仓储
-        ExecutionEngineRepo repo = getOrCreateEngineRepo();
+        LogicEngineRepo repo = getOrCreateEngineRepo();
 
         // 4. 自动选择合适的执行引擎
-        ExecutionEngine engine = repo.findEngine(context);
+        LogicEngine engine = repo.findEngine(context);
 
         // 5. 执行调用
         return engine.invoke(inputs, context);
@@ -96,8 +96,8 @@ public class DMethod {
     /**
      * 构建执行上下文
      */
-    private ExecutionContext buildExecutionContext() {
-        return ExecutionContext.builder()
+    private LogicContext buildExecutionContext() {
+        return LogicContext.builder()
             .type(scriptType)
             .javaMethod(javaMethod)
             .declaringClass(declaringClass)
@@ -114,10 +114,10 @@ public class DMethod {
     /**
      * 获取或创建引擎仓储（延迟初始化）
      */
-    private ExecutionEngineRepo getOrCreateEngineRepo() {
-        if (executionEngineRepo == null) {
-            executionEngineRepo = new ExecutionEngineRepo();
+    private LogicEngineRepo getOrCreateEngineRepo() {
+        if (logicEngineRepo == null) {
+            logicEngineRepo = new LogicEngineRepo();
         }
-        return executionEngineRepo;
+        return logicEngineRepo;
     }
 }
