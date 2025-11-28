@@ -18,20 +18,21 @@ public interface ICommandHandler {
     @Data
     class Command {
 
+        private String from;
         private String methodName;
-
         private Object param;
     }
 
     @Data
     class CommandResult {
+        private String to;
         private Object date;
     }
 
     /**
      * 实体事件 - 用于追踪实体的变更记录
      * 支持增(CREATE)、删(DELETE)、改(UPDATE)操作，记录原值和修改后的值
-     *
+     * <p>
      * 遵循Clean Architecture原则：
      * - 纯领域对象，无外部依赖
      * - 不可变性保证线程安全
@@ -41,116 +42,42 @@ public interface ICommandHandler {
     class EntityEvent {
 
         /**
-         * 操作类型枚举
+         * 实体名称
          */
-        public enum OperationType {
-            /** 创建操作 */
-            CREATE("CREATE"),
-            /** 更新操作 */
-            UPDATE("UPDATE"),
-            /** 删除操作 */
-            DELETE("DELETE");
-
-            private final String code;
-
-            OperationType(String code) {
-                this.code = code;
-            }
-
-            public String getCode() {
-                return code;
-            }
-        }
-
-        /**
-         * 字段变更记录 - 值对象(Value Object)
-         * 记录单个字段的原值和新值
-         */
-        @Data
-        public static class FieldChange {
-            /** 字段名称 */
-            private final String fieldName;
-            /** 原始值 */
-            private final Object originalValue;
-            /** 修改后的值 */
-            private final Object newValue;
-            /** 字段类型 */
-            private final String fieldType;
-
-            public FieldChange(String fieldName, Object originalValue, Object newValue) {
-                this(fieldName, originalValue, newValue, null);
-            }
-
-            public FieldChange(String fieldName, Object originalValue, Object newValue, String fieldType) {
-                this.fieldName = fieldName;
-                this.originalValue = originalValue;
-                this.newValue = newValue;
-                this.fieldType = fieldType;
-            }
-
-            /**
-             * 判断值是否真正发生变更
-             */
-            public boolean hasChanged() {
-                if (originalValue == null && newValue == null) {
-                    return false;
-                }
-                if (originalValue == null || newValue == null) {
-                    return true;
-                }
-                return !originalValue.equals(newValue);
-            }
-
-            /**
-             * 获取变更描述
-             */
-            public String getChangeDescription() {
-                return String.format("[%s]: %s -> %s",
-                        fieldName,
-                        formatValue(originalValue),
-                        formatValue(newValue));
-            }
-
-            private String formatValue(Object value) {
-                if (value == null) {
-                    return "null";
-                }
-                if (value instanceof String) {
-                    return "\"" + value + "\"";
-                }
-                return value.toString();
-            }
-        }
-
-        /** 实体名称 */
         private String entityName;
-
-        /** 事件名称 */
+        /**
+         * 事件名称
+         */
         private String eventName;
-
-        /** 操作类型 */
+        /**
+         * 操作类型
+         */
         private OperationType operationType;
-
-        /** 实体ID */
+        /**
+         * 实体ID
+         */
         private String entityId;
-
-        /** 字段变更列表 */
+        /**
+         * 字段变更列表
+         */
         private List<FieldChange> fieldChanges;
-
-        /** 事件发生时间戳(纳秒) - 符合低延迟性能要求 */
+        /**
+         * 事件发生时间戳(纳秒) - 符合低延迟性能要求
+         */
         private long timestampNanos;
-
-        /** 操作用户 */
+        /**
+         * 操作用户
+         */
         private String operator;
-
-        /** 备注信息 */
+        /**
+         * 备注信息
+         */
         private String remarks;
 
         /**
          * 构造器 - CREATE操作
          */
-        public static EntityEvent createEvent(String entityName, String entityId,
-                                              List<FieldChange> fieldChanges) {
+        public static EntityEvent createEvent(String entityName, String entityId, List<FieldChange> fieldChanges) {
             EntityEvent event = new EntityEvent();
             event.entityName = entityName;
             event.eventName = "ENTITY_CREATED";
@@ -164,8 +91,7 @@ public interface ICommandHandler {
         /**
          * 构造器 - UPDATE操作
          */
-        public static EntityEvent updateEvent(String entityName, String entityId,
-                                              List<FieldChange> fieldChanges) {
+        public static EntityEvent updateEvent(String entityName, String entityId, List<FieldChange> fieldChanges) {
             EntityEvent event = new EntityEvent();
             event.entityName = entityName;
             event.eventName = "ENTITY_UPDATED";
@@ -179,8 +105,7 @@ public interface ICommandHandler {
         /**
          * 构造器 - DELETE操作
          */
-        public static EntityEvent deleteEvent(String entityName, String entityId,
-                                              List<FieldChange> fieldChanges) {
+        public static EntityEvent deleteEvent(String entityName, String entityId, List<FieldChange> fieldChanges) {
             EntityEvent event = new EntityEvent();
             event.entityName = entityName;
             event.eventName = "ENTITY_DELETED";
@@ -225,9 +150,7 @@ public interface ICommandHandler {
             if (fieldChanges == null) {
                 return 0;
             }
-            return fieldChanges.stream()
-                    .filter(FieldChange::hasChanged)
-                    .count();
+            return fieldChanges.stream().filter(FieldChange::hasChanged).count();
         }
 
         /**
@@ -235,8 +158,7 @@ public interface ICommandHandler {
          */
         public String getChangeSummary() {
             StringBuilder summary = new StringBuilder();
-            summary.append(String.format("[%s] 实体: %s, ID: %s",
-                    operationType.getCode(), entityName, entityId));
+            summary.append(String.format("[%s] 实体: %s, ID: %s", operationType.getCode(), entityName, entityId));
 
             if (operator != null) {
                 summary.append(", 操作人: ").append(operator);
@@ -258,11 +180,7 @@ public interface ICommandHandler {
             description.append("\n变更明细:\n");
 
             if (fieldChanges != null) {
-                fieldChanges.stream()
-                        .filter(FieldChange::hasChanged)
-                        .forEach(change -> description.append("  ")
-                                .append(change.getChangeDescription())
-                                .append("\n"));
+                fieldChanges.stream().filter(FieldChange::hasChanged).forEach(change -> description.append("  ").append(change.getChangeDescription()).append("\n"));
             }
 
             if (remarks != null && !remarks.trim().isEmpty()) {
@@ -291,5 +209,78 @@ public interface ICommandHandler {
             }
             fieldChanges.add(new FieldChange(fieldName, originalValue, newValue, fieldType));
         }
+
+        /**
+         * 操作类型枚举
+         */
+        public enum OperationType {
+            /**
+             * 创建操作
+             */
+            CREATE("CREATE"),
+            /**
+             * 更新操作
+             */
+            UPDATE("UPDATE"),
+            /**
+             * 删除操作
+             */
+            DELETE("DELETE");
+
+            private final String code;
+
+            OperationType(String code) {
+                this.code = code;
+            }
+
+            public String getCode() {
+                return code;
+            }
+        }
+
+        /**
+         * 字段变更记录 - 值对象(Value Object)
+         * 记录单个字段的原值和新值
+         *
+         * @param fieldName     字段名称
+         * @param originalValue 原始值
+         * @param newValue      修改后的值
+         * @param fieldType     字段类型
+         */
+                public record FieldChange(String fieldName, Object originalValue, Object newValue, String fieldType) {
+                    public FieldChange(String fieldName, Object originalValue, Object newValue) {
+                        this(fieldName, originalValue, newValue, null);
+                    }
+
+            /**
+                     * 判断值是否真正发生变更
+                     */
+                    public boolean hasChanged() {
+                        if (originalValue == null && newValue == null) {
+                            return false;
+                        }
+                        if (originalValue == null || newValue == null) {
+                            return true;
+                        }
+                        return !originalValue.equals(newValue);
+                    }
+
+                    /**
+                     * 获取变更描述
+                     */
+                    public String getChangeDescription() {
+                        return String.format("[%s]: %s -> %s", fieldName, formatValue(originalValue), formatValue(newValue));
+                    }
+
+                    private String formatValue(Object value) {
+                        if (value == null) {
+                            return "null";
+                        }
+                        if (value instanceof String) {
+                            return "\"" + value + "\"";
+                        }
+                        return value.toString();
+                    }
+                }
     }
 }

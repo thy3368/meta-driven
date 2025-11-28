@@ -233,9 +233,9 @@ public class EntityObjectRepo implements IEntityObjectRepo {
 
         // 遍历所有字段变更，构建INSERT语句
         for (ICommandHandler.EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
-            String columnName = getColumnName(dClass, fieldChange.getFieldName());
+            String columnName = getColumnName(dClass, fieldChange.fieldName());
             columns.add(columnName);
-            values.add(formatValue(fieldChange.getNewValue()));
+            values.add(formatValue(fieldChange.newValue()));
         }
 
         return String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(", ", columns), String.join(", ", values));
@@ -249,9 +249,9 @@ public class EntityObjectRepo implements IEntityObjectRepo {
 
         // 只更新实际变更的字段
         for (ICommandHandler.EntityEvent.FieldChange fieldChange : entityEvent.getFieldChanges()) {
-            if (fieldChange.hasChanged() && !isIdField(dClass, fieldChange.getFieldName())) {
-                String columnName = getColumnName(dClass, fieldChange.getFieldName());
-                String value = formatValue(fieldChange.getNewValue());
+            if (fieldChange.hasChanged() && !isIdField(dClass, fieldChange.fieldName())) {
+                String columnName = getColumnName(dClass, fieldChange.fieldName());
+                String value = formatValue(fieldChange.newValue());
                 setClauses.add(columnName + " = " + value);
             }
         }
