@@ -714,41 +714,693 @@ groups:
 
 ---
 
-## 九、低延迟优化建议
+## 九、低延迟监控指标体系
 
-针对低延迟场景的特殊优化：
+针对低延迟场景，除了基础的 RED 指标外，需要关注以下深度指标：
 
-| 优化项 | 配置 | 说明 |
-|--------|------|------|
-| **采样率** | `probability: 0.1` | 生产环境 10% 采样，降低开销 |
-| **异步日志** | `AsyncAppender` | 日志异步写入，不阻塞主线程 |
-| **批量导出** | OTLP batch exporter | Trace 批量发送，减少网络 IO |
-| **指标推送** | Prometheus pull | 避免推送模式的锁竞争 |
-| **堆外缓冲** | DirectByteBuffer | 日志/指标使用堆外内存 |
+### 9.1 核心延迟指标
 
-### 低延迟配置示例
+| 类别 | 指标 | 说明 | 告警阈值 |
+|------|------|------|----------|
+| **尾延迟** | P99.9 / P99.99 | 极端情况延迟 | 根据 SLA 设定 |
+| **延迟抖动** | stddev / variance | 延迟稳定性 | 抖动 > 均值 50% |
+| **最大延迟** | max latency | 最坏情况 | 根据业务容忍度 |
+
+### 9.2 JVM 深度指标
+
+#### GC 详细指标
+```yaml
+# Prometheus 指标
+jvm_gc_pause_seconds{action="end of minor GC"}     # Young GC 暂停
+jvm_gc_pause_seconds{action="end of major GC"}     # Full GC 暂停
+jvm_gc_pause_seconds_max                           # 最大 GC 暂停
+jvm_gc_pause_seconds_count                         # GC 次数
+jvm_gc_memory_promoted_bytes_total                 # 晋升到老年代的字节数
+jvm_gc_memory_allocated_bytes_total                # 分配速率
+jvm_gc_live_data_size_bytes                        # 存活数据大小
+```
+
+#### SafePoint 指标
+```yaml
+# 需要开启 JVM 参数: -XX:+PrintSafepointStatistics
+jvm_safepoint_pause_seconds                        # SafePoint 暂停时间
+jvm_safepoint_count                                # SafePoint 次数
+jvm_time_to_safepoint_seconds                      # 到达 SafePoint 的时间
+```
+
+#### JIT 编译指标
+```yaml
+jvm_compilation_time_ms_total                      # JIT 编译总时间
+jvm_classes_loaded                                 # 已加载类数量
+jvm_classes_unloaded                               # 卸载类数量 (动态编译相关)
+```
+
+### 9.3 系统级指标
+
+#### CPU 指标
+```yaml
+# Node Exporter 指标
+node_cpu_seconds_total{mode="idle"}                # CPU 空闲
+node_cpu_seconds_total{mode="iowait"}              # I/O 等待
+node_cpu_seconds_total{mode="softirq"}             # 软中断时间
+node_cpu_seconds_total{mode="steal"}               # 虚拟化偷取时间
+
+# 上下文切换
+node_context_switches_total                        # 上下文切换次数
+node_procs_running                                 # 运行中进程数
+```
+
+#### 内存指标
+```yaml
+node_memory_MemAvailable_bytes                     # 可用内存
+node_memory_Buffers_bytes                          # 缓冲区
+node_memory_Cached_bytes                           # 页面缓存
+node_vmstat_pgmajfault                             # 主缺页次数 (关键!)
+node_vmstat_pgfault                                # 缺页次数
+```
+
+#### 网络指标
+```yaml
+node_network_receive_packets_total                 # 接收包数
+node_network_transmit_packets_total                # 发送包数
+node_network_receive_drop_total                    # 接收丢包
+node_network_transmit_drop_total                   # 发送丢包
+node_netstat_Tcp_RetransSegs                       # TCP 重传
+node_sockstat_TCP_tw                               # TIME_WAIT 数量
+```
+
+### 9.4 低延迟专项指标组件
+
+#### 纳秒级延迟指标
+
+```java
+package com.tanggo.fund.metadriven.observability;
+
+import io.micrometer.core.instrument.*;
+import org.springframework.stereotype.Component;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * 低延迟场景专用指标
+ * 提供纳秒级精度的延迟监控
+ */
+@Component
+public class LowLatencyMetrics {
+
+    private final Timer processingTimer;
+    private final DistributionSummary latencyDistribution;
+    private final Counter timeoutCounter;
+    private final AtomicLong maxLatencyNanos;
+    private final AtomicLong minLatencyNanos;
+
+    public LowLatencyMetrics(MeterRegistry registry) {
+        // 处理时间 Timer (纳秒精度, 扩展到 P99.99)
+        this.processingTimer = Timer.builder("business.processing.time")
+            .description("Business processing time with nanosecond precision")
+            .publishPercentiles(0.5, 0.9, 0.95, 0.99, 0.999, 0.9999)
+            .publishPercentileHistogram()
+            .minimumExpectedValue(Duration.ofNanos(100))
+            .maximumExpectedValue(Duration.ofMillis(100))
+            .register(registry);
+
+        // 延迟分布 (微秒单位，用于分析)
+        this.latencyDistribution = DistributionSummary.builder("business.latency.distribution")
+            .description("Latency distribution in microseconds")
+            .baseUnit("microseconds")
+            .publishPercentiles(0.5, 0.9, 0.95, 0.99, 0.999, 0.9999)
+            .register(registry);
+
+        // 超时计数
+        this.timeoutCounter = Counter.builder("business.timeout.total")
+            .description("Number of timeouts")
+            .register(registry);
+
+        // 最大延迟 Gauge (滑动窗口)
+        this.maxLatencyNanos = new AtomicLong(0);
+        Gauge.builder("business.latency.max", maxLatencyNanos, AtomicLong::get)
+            .description("Maximum latency in current window")
+            .baseUnit("nanoseconds")
+            .register(registry);
+
+        // 最小延迟 Gauge
+        this.minLatencyNanos = new AtomicLong(Long.MAX_VALUE);
+        Gauge.builder("business.latency.min", minLatencyNanos, AtomicLong::get)
+            .description("Minimum latency in current window")
+            .baseUnit("nanoseconds")
+            .register(registry);
+    }
+
+    /**
+     * 记录延迟 (纳秒级)
+     */
+    public void recordLatency(long startNanos) {
+        long durationNanos = System.nanoTime() - startNanos;
+        processingTimer.record(durationNanos, TimeUnit.NANOSECONDS);
+        latencyDistribution.record(durationNanos / 1000.0); // 转微秒
+
+        // 更新最大/最小延迟
+        maxLatencyNanos.updateAndGet(current -> Math.max(current, durationNanos));
+        minLatencyNanos.updateAndGet(current -> Math.min(current, durationNanos));
+    }
+
+    /**
+     * 记录超时
+     */
+    public void recordTimeout() {
+        timeoutCounter.increment();
+    }
+
+    /**
+     * 重置滑动窗口统计 (定时调用)
+     */
+    public void resetWindow() {
+        maxLatencyNanos.set(0);
+        minLatencyNanos.set(Long.MAX_VALUE);
+    }
+
+    /**
+     * 计算延迟抖动 (标准差近似)
+     */
+    public double getLatencyJitter() {
+        long max = maxLatencyNanos.get();
+        long min = minLatencyNanos.get();
+        if (min == Long.MAX_VALUE) return 0;
+        return (max - min) / 2.0;
+    }
+}
+```
+
+#### 线程池监控指标
+
+```java
+package com.tanggo.fund.metadriven.observability;
+
+import io.micrometer.core.instrument.*;
+import org.springframework.stereotype.Component;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 线程池深度监控
+ * 用于发现线程竞争和队列积压问题
+ */
+@Component
+public class ThreadPoolMetrics {
+
+    private final Timer queueWaitTimer;
+    private final Counter rejectedCounter;
+
+    public ThreadPoolMetrics(MeterRegistry registry) {
+        this.queueWaitTimer = Timer.builder("threadpool.queue.wait.time")
+            .description("Time spent waiting in queue")
+            .publishPercentiles(0.5, 0.95, 0.99, 0.999)
+            .register(registry);
+
+        this.rejectedCounter = Counter.builder("threadpool.rejected.total")
+            .description("Rejected task count")
+            .register(registry);
+    }
+
+    /**
+     * 注册线程池监控
+     */
+    public void registerExecutor(String name, ThreadPoolExecutor executor, MeterRegistry registry) {
+        // 队列大小
+        Gauge.builder("threadpool.queue.size", executor, e -> e.getQueue().size())
+            .description("Current queue size")
+            .tag("name", name)
+            .register(registry);
+
+        // 活跃线程数
+        Gauge.builder("threadpool.active.count", executor, ThreadPoolExecutor::getActiveCount)
+            .description("Active thread count")
+            .tag("name", name)
+            .register(registry);
+
+        // 池大小
+        Gauge.builder("threadpool.pool.size", executor, ThreadPoolExecutor::getPoolSize)
+            .description("Current pool size")
+            .tag("name", name)
+            .register(registry);
+
+        // 任务完成数
+        FunctionCounter.builder("threadpool.completed.total", executor,
+                ThreadPoolExecutor::getCompletedTaskCount)
+            .description("Completed task count")
+            .tag("name", name)
+            .register(registry);
+
+        // 队列剩余容量
+        Gauge.builder("threadpool.queue.remaining", executor,
+                e -> e.getQueue().remainingCapacity())
+            .description("Queue remaining capacity")
+            .tag("name", name)
+            .register(registry);
+    }
+
+    /**
+     * 记录队列等待时间
+     */
+    public void recordQueueWait(long waitNanos) {
+        queueWaitTimer.record(waitNanos, TimeUnit.NANOSECONDS);
+    }
+
+    /**
+     * 记录拒绝任务
+     */
+    public void recordRejection() {
+        rejectedCounter.increment();
+    }
+}
+```
+
+#### 锁竞争监控
+
+```java
+package com.tanggo.fund.metadriven.observability;
+
+import io.micrometer.core.instrument.*;
+import org.springframework.stereotype.Component;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Supplier;
+
+/**
+ * 锁竞争监控
+ * 用于发现锁争用导致的延迟
+ */
+@Component
+public class LockContentionMetrics {
+
+    private final Timer lockAcquisitionTime;
+    private final Counter lockContentionCount;
+    private final Counter lockTimeoutCount;
+
+    public LockContentionMetrics(MeterRegistry registry) {
+        this.lockAcquisitionTime = Timer.builder("lock.acquisition.time")
+            .description("Time to acquire lock")
+            .publishPercentiles(0.5, 0.95, 0.99, 0.999)
+            .register(registry);
+
+        this.lockContentionCount = Counter.builder("lock.contention.total")
+            .description("Lock contention count (failed tryLock)")
+            .register(registry);
+
+        this.lockTimeoutCount = Counter.builder("lock.timeout.total")
+            .description("Lock acquisition timeout count")
+            .register(registry);
+    }
+
+    /**
+     * 带监控的锁执行
+     */
+    public <T> T measureLock(Lock lock, Supplier<T> action) {
+        long start = System.nanoTime();
+        boolean acquired = lock.tryLock();
+
+        if (!acquired) {
+            lockContentionCount.increment();
+            lock.lock();
+        }
+
+        try {
+            lockAcquisitionTime.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+            return action.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * 带超时的锁执行
+     */
+    public <T> T measureLockWithTimeout(Lock lock, long timeoutMs, Supplier<T> action)
+            throws InterruptedException {
+        long start = System.nanoTime();
+        boolean acquired = lock.tryLock(timeoutMs, TimeUnit.MILLISECONDS);
+
+        if (!acquired) {
+            lockTimeoutCount.increment();
+            throw new IllegalStateException("Lock acquisition timeout");
+        }
+
+        try {
+            lockAcquisitionTime.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+            return action.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
+
+#### 内存分配追踪
+
+```java
+package com.tanggo.fund.metadriven.observability;
+
+import io.micrometer.core.instrument.*;
+import org.springframework.stereotype.Component;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.util.List;
+
+/**
+ * 内存分配监控
+ * 用于追踪分配速率和 GC 压力
+ */
+@Component
+public class MemoryAllocationMetrics {
+
+    public MemoryAllocationMetrics(MeterRegistry registry) {
+        // Eden 区使用率 (分配速率指标)
+        List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
+
+        for (MemoryPoolMXBean pool : pools) {
+            String poolName = pool.getName().toLowerCase().replace(" ", "_");
+
+            // 内存池使用量
+            Gauge.builder("jvm.memory.pool.used", pool, p -> p.getUsage().getUsed())
+                .description("Memory pool used bytes")
+                .tag("pool", poolName)
+                .baseUnit("bytes")
+                .register(registry);
+
+            // 内存池峰值
+            Gauge.builder("jvm.memory.pool.peak", pool, p -> p.getPeakUsage().getUsed())
+                .description("Memory pool peak used bytes")
+                .tag("pool", poolName)
+                .baseUnit("bytes")
+                .register(registry);
+        }
+
+        // 堆外内存监控
+        Gauge.builder("jvm.buffer.memory.used",
+                () -> ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed())
+            .description("Non-heap memory used")
+            .baseUnit("bytes")
+            .register(registry);
+    }
+}
+```
+
+### 9.5 低延迟告警规则
+
+```yaml
+# config/alert.rules.yml 低延迟专项告警
+groups:
+  - name: low-latency-alerts
+    rules:
+      # P99.9 延迟告警
+      - alert: HighP999Latency
+        expr: |
+          histogram_quantile(0.999,
+            sum(rate(http_server_requests_seconds_bucket{application="meta-driven"}[5m])) by (le)
+          ) > 0.01
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P99.9 latency above 10ms"
+          description: "P99.9 latency is {{ $value | humanizeDuration }}"
+
+      # P99.99 延迟告警 (极端情况)
+      - alert: HighP9999Latency
+        expr: |
+          histogram_quantile(0.9999,
+            sum(rate(http_server_requests_seconds_bucket{application="meta-driven"}[5m])) by (le)
+          ) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "P99.99 latency above 100ms"
+
+      # 延迟抖动告警
+      - alert: HighLatencyJitter
+        expr: |
+          stddev_over_time(
+            histogram_quantile(0.99,
+              sum(rate(http_server_requests_seconds_bucket{application="meta-driven"}[1m])) by (le)
+            )[5m:]
+          )
+          /
+          avg_over_time(
+            histogram_quantile(0.99,
+              sum(rate(http_server_requests_seconds_bucket{application="meta-driven"}[1m])) by (le)
+            )[5m:]
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency jitter detected"
+          description: "Latency stddev > 50% of mean"
+
+      # GC 频率告警
+      - alert: HighGCFrequency
+        expr: |
+          rate(jvm_gc_pause_seconds_count{application="meta-driven"}[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GC frequency above 1/s"
+          description: "High GC frequency may cause latency spikes"
+
+      # Young GC 暂停时间告警
+      - alert: HighYoungGCPause
+        expr: |
+          jvm_gc_pause_seconds_max{application="meta-driven",action=~".*minor.*|.*young.*"} > 0.01
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Young GC pause above 10ms"
+
+      # 内存分配速率告警
+      - alert: HighAllocationRate
+        expr: |
+          rate(jvm_gc_memory_allocated_bytes_total{application="meta-driven"}[5m]) > 500000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory allocation rate above 500MB/s"
+          description: "High allocation rate indicates potential GC pressure"
+
+      # 主缺页告警 (系统级)
+      - alert: HighMajorPageFault
+        expr: |
+          rate(node_vmstat_pgmajfault[5m]) > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High major page fault rate"
+          description: "Major page faults cause significant latency"
+
+      # 上下文切换告警
+      - alert: HighContextSwitches
+        expr: |
+          rate(node_context_switches_total[5m]) > 100000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High context switch rate (>100k/s)"
+
+      # SafePoint 暂停告警
+      - alert: HighSafepointPause
+        expr: |
+          jvm_safepoint_pause_seconds_max > 0.01
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SafePoint pause above 10ms"
+
+      # 线程池队列积压
+      - alert: ThreadPoolQueueBacklog
+        expr: |
+          threadpool_queue_size{application="meta-driven"} > 100
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Thread pool queue backlog detected"
+          description: "Queue size: {{ $value }}"
+
+      # 线程池拒绝任务
+      - alert: ThreadPoolRejection
+        expr: |
+          rate(threadpool_rejected_total{application="meta-driven"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Thread pool rejecting tasks"
+
+      # 锁竞争告警
+      - alert: HighLockContention
+        expr: |
+          rate(lock_contention_total{application="meta-driven"}[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High lock contention rate"
+
+      # TCP 重传告警
+      - alert: HighTCPRetransmission
+        expr: |
+          rate(node_netstat_Tcp_RetransSegs[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High TCP retransmission rate"
+
+      # 超时计数告警
+      - alert: BusinessTimeout
+        expr: |
+          rate(business_timeout_total{application="meta-driven"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Business timeout detected"
+```
+
+### 9.6 低延迟监控 Dashboard 关键面板
+
+| 面板 | 指标 | 说明 |
+|------|------|------|
+| **延迟分布** | P50/P90/P95/P99/P99.9/P99.99 | 全面展示延迟分布 |
+| **延迟热力图** | Histogram heatmap | 可视化延迟分布变化 |
+| **延迟抖动** | stddev over time | 延迟稳定性 |
+| **GC 暂停时间** | gc_pause_seconds by action | 按 GC 类型分类 |
+| **GC 频率** | gc_pause_count rate | 识别 GC 风暴 |
+| **内存分配速率** | allocated_bytes/s | 识别分配热点 |
+| **CPU 利用率分解** | user/system/iowait/softirq | 识别 CPU 瓶颈 |
+| **上下文切换** | context_switches/s | 识别线程竞争 |
+| **网络延迟** | tcp_retrans/dropped | 网络层问题 |
+| **线程池状态** | queue_size/active_count | 识别积压 |
+| **锁竞争率** | contention_count/s | 识别锁争用 |
+
+### 9.7 Prometheus 采集优化
+
+```yaml
+# config/prometheus.yml 低延迟场景优化配置
+global:
+  scrape_interval: 5s          # 更频繁采集
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'meta-driven'
+    scrape_interval: 5s
+    scrape_timeout: 3s         # 超时控制
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          application: 'meta-driven'
+          environment: 'local'
+
+  # Node Exporter (系统级指标)
+  - job_name: 'node'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+
+  # 使用 Exemplars 关联 Trace
+  - job_name: 'meta-driven-exemplars'
+    scrape_interval: 5s
+    enable_http2: true
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+```
+
+### 9.8 低延迟配置优化
 
 ```yaml
 # 生产环境低延迟配置
 management:
   tracing:
     sampling:
-      probability: 0.1  # 10% 采样率
+      probability: 0.1  # 10% 采样率，降低开销
 
   metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        business.processing.time: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99, 0.999, 0.9999
+        business.processing.time: 0.5, 0.9, 0.95, 0.99, 0.999, 0.9999
+      minimum-expected-value:
+        http.server.requests: 100us
+        business.processing.time: 100ns
+      maximum-expected-value:
+        http.server.requests: 1s
+        business.processing.time: 100ms
     export:
       prometheus:
-        step: 30s  # 指标刷新间隔
+        step: 5s  # 更频繁刷新
 ```
 
 ```xml
 <!-- logback 低延迟配置 -->
 <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
-    <queueSize>2048</queueSize>
+    <queueSize>4096</queueSize>
     <discardingThreshold>0</discardingThreshold>
     <neverBlock>true</neverBlock>  <!-- 关键：永不阻塞 -->
+    <includeCallerData>false</includeCallerData>  <!-- 禁用调用者信息，减少开销 -->
     <appender-ref ref="JSON_FILE"/>
 </appender>
+```
+
+### 9.9 JVM 低延迟参数
+
+```bash
+# 低延迟 JVM 参数
+JAVA_OPTS="
+  # GC 选择 (三选一)
+  # 选项 1: G1GC (平衡)
+  -XX:+UseG1GC
+  -XX:MaxGCPauseMillis=10
+  -XX:G1HeapRegionSize=4m
+
+  # 选项 2: ZGC (超低延迟，需要 JDK 15+)
+  # -XX:+UseZGC
+  # -XX:+ZGenerational
+
+  # 选项 3: Shenandoah (低延迟)
+  # -XX:+UseShenandoahGC
+
+  # 通用优化
+  -XX:+AlwaysPreTouch
+  -XX:+UseNUMA
+  -XX:+DisableExplicitGC
+  -XX:-UseBiasedLocking
+  -XX:+UseTransparentHugePages
+
+  # SafePoint 优化
+  -XX:+UnlockDiagnosticVMOptions
+  -XX:GuaranteedSafepointInterval=0
+
+  # 预热和编译
+  -XX:+TieredCompilation
+  -XX:CompileThreshold=1000
+
+  # 监控支持
+  -XX:+PrintGCDetails
+  -XX:+PrintGCDateStamps
+  -Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=10m
+  -Xlog:safepoint*:file=safepoint.log:time,uptime
+"
 ```
 
 ---
