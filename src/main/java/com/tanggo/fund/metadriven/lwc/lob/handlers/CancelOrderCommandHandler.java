@@ -21,24 +21,20 @@ public class CancelOrderCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        Object param = command.getParam();
-        if (!(param instanceof CancelOrderCommand)) {
+        Object param = command.param();
+        if (!(param instanceof CancelOrderCommand cmd)) {
             throw new IllegalArgumentException("Command param must be CancelOrderCommand");
         }
-
-        CancelOrderCommand cmd = (CancelOrderCommand) param;
 
         // 执行撤单
         boolean success = orderBookService.cancelOrder(cmd.getSymbol(), cmd.getOrderId());
 
         // 构造返回结果
-        CommandResult cmdResult = new CommandResult();
         CancelOrderResult data = new CancelOrderResult();
         data.setSuccess(success);
         data.setOrderId(cmd.getOrderId());
-        cmdResult.setDate(data);
 
-        return cmdResult;
+        return CommandResult.success(command, data);
     }
 
     @Override

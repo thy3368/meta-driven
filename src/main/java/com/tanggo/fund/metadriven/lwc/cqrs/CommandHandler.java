@@ -21,22 +21,22 @@ public class CommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
+        try {
+            //1. 预处理
+            proHandle(command);
+            //2. 业务操作后 生成entity_event
+            List<EntityEvent> entityEvents = doHandle(command);
+            //3. 写入流水
+            entityEventRepo.insertBatch(entityEvents);
+            //4. 写库
+            entityRepo.replay(entityEvents);
+            //5. 后置处理
+            afterHandle(command, entityEvents);
 
-        //1. 预处理
-        proHandle(command);
-        //2. 业务操作后 生成entity_event
-        List<EntityEvent> entityEvents = doHandle(command);
-        //3. 写入流水
-        entityEventRepo.insertBatch(entityEvents);
-        //4. 写库
-        entityRepo.replay(entityEvents);
-
-
-        CommandResult handleResult = new CommandResult();
-        //5. 后置处理
-        afterHandle(command, entityEvents);
-        return handleResult;
-
+            return CommandResult.success(command, entityEvents);
+        } catch (Exception e) {
+            return CommandResult.fromException(command, e);
+        }
     }
 
     @Override

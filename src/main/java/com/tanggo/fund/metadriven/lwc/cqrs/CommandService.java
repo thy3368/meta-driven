@@ -19,7 +19,7 @@ public class CommandService {
     public ICommandHandler.CommandResult handleCommand(ICommandHandler.Command command) {
 
 //        commandRepo.insert(command);
-        ICommandHandler handler = commandHandlerRepo.queryCommandHandler(command.getMethodName());
+        ICommandHandler handler = commandHandlerRepo.queryCommandHandler(command.methodName());
         return handler.handle(command);
 
 
@@ -29,7 +29,7 @@ public class CommandService {
     public ICommandHandler.CommandResult handleQuery(ICommandHandler.Command command) {
 
 //        commandRepo.insert(command);
-        ICommandHandler handler = commandHandlerRepo.queryQueryHandler(command.getMethodName());
+        ICommandHandler handler = commandHandlerRepo.queryQueryHandler(command.methodName());
         return handler.handle(command);
 
 

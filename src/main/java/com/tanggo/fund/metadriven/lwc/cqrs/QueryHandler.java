@@ -59,8 +59,7 @@ public class QueryHandler implements ICommandHandler {
         DObject entity = entityRepo.queryOne("entityName");
         //do something biz
         //生成entity_event 用于持久化
-        CommandResult result = new CommandResult();
-        return result;
+        return CommandResult.success(command, entity);
     }
 
 

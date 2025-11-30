@@ -23,12 +23,10 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        Object param = command.getParam();
-        if (!(param instanceof PlaceOrderCommand)) {
+        Object param = command.param();
+        if (!(param instanceof PlaceOrderCommand cmd)) {
             throw new IllegalArgumentException("Command param must be PlaceOrderCommand");
         }
-
-        PlaceOrderCommand cmd = (PlaceOrderCommand) param;
 
         // 创建限价订单
         LimitOrder order = new LimitOrder(
@@ -43,14 +41,12 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
         MatchResult result = orderBookService.placeOrder(order);
 
         // 构造返回结果
-        CommandResult cmdResult = new CommandResult();
         PlaceOrderResult data = new PlaceOrderResult();
         data.setOrder(result.getOrder());
         data.setTrades(result.getTrades());
         data.setSuccess(true);
-        cmdResult.setDate(data);
 
-        return cmdResult;
+        return CommandResult.success(command, data);
     }
 
     @Override

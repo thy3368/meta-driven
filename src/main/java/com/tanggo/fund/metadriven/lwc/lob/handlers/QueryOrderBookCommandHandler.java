@@ -21,12 +21,10 @@ public class QueryOrderBookCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        Object param = command.getParam();
-        if (!(param instanceof QueryOrderBookCommand)) {
+        Object param = command.param();
+        if (!(param instanceof QueryOrderBookCommand cmd)) {
             throw new IllegalArgumentException("Command param must be QueryOrderBookCommand");
         }
-
-        QueryOrderBookCommand cmd = (QueryOrderBookCommand) param;
 
         // 查询订单薄快照
         int depth = cmd.getDepth() != null ? cmd.getDepth() : 10;
@@ -34,10 +32,7 @@ public class QueryOrderBookCommandHandler implements ICommandHandler {
             orderBookService.getOrderBookSnapshot(cmd.getSymbol(), depth);
 
         // 构造返回结果
-        CommandResult cmdResult = new CommandResult();
-        cmdResult.setDate(snapshot);
-
-        return cmdResult;
+        return CommandResult.success(command, snapshot);
     }
 
     @Override

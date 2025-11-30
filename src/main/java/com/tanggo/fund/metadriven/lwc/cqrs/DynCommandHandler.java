@@ -22,7 +22,7 @@ public class DynCommandHandler implements ICommandHandler {
 
     @Override
     public CommandResult handle(Command command) {
-        Object param = command.getParam();
+        Object param = command.param();
         if (!(param instanceof CancelOrderCommand cmd)) {
             throw new IllegalArgumentException("Command param must be CancelOrderCommand");
         }
@@ -41,17 +41,16 @@ public class DynCommandHandler implements ICommandHandler {
         // 执行命令
         Object result = logicEngine.invoke(command, context);
 
-        // 构造返回结果
-        CommandResult cmdResult = (result instanceof CommandResult)
-            ? (CommandResult) result
-            : new CommandResult();
+        // 构造返回结果 - 使用新的静态工厂方法
+        if (result instanceof CommandResult cmdResultFromEngine) {
+            return cmdResultFromEngine;
+        }
 
         CancelOrderResult data = new CancelOrderResult();
         data.setSuccess(true);
         data.setOrderId(cmd.getOrderId());
-        cmdResult.setDate(data);
 
-        return cmdResult;
+        return CommandResult.success(command, data);
     }
 
     @Override

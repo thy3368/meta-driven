@@ -1,7 +1,7 @@
 package com.tanggo.fund.metadriven.lwc.cqrs;
 
-
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -15,18 +15,142 @@ public interface ICommandHandler {
     //执行真实业务命令
     List<EntityEvent> doHandle(Command command);
 
-    @Data
-    class Command {
+    /**
+     * 命令对象 - 值对象(Value Object)
+     * 封装命令的来源、方法和参数信息
+     * <p>
+     * 遵循Clean Architecture原则：
+     * - 不可变性保证线程安全
+     * - 纯领域对象，无外部依赖
+     *
+     * @param from       命令来源标识
+     * @param methodName 执行的方法名称
+     * @param param      命令参数
+     * @param commandId  命令唯一标识(用于追踪和幂等)
+     * @param timestampNanos 命令创建时间戳(纳秒) - 符合低延迟性能要求
+     */
+    record Command(
+            String from,
+            String methodName,
+            Object param,
+            String commandId,
+            long timestampNanos
+    ) {
+        /**
+         * 简化构造器 - 自动生成commandId和时间戳
+         */
+        public Command(String from, String methodName, Object param) {
+            this(from, methodName, param,
+                    java.util.UUID.randomUUID().toString(),
+                    System.nanoTime());
+        }
 
-        private String from;
-        private String methodName;
-        private Object param;
+        /**
+         * 业务规则验证
+         */
+        public void validate() {
+            if (methodName == null || methodName.trim().isEmpty()) {
+                throw new IllegalArgumentException("方法名称不能为空");
+            }
+        }
     }
 
-    @Data
-    class CommandResult {
-        private String to;
-        private Object date;
+    /**
+     * 命令执行结果 - 值对象(Value Object)
+     * 封装命令执行的结果信息，支持成功和失败两种状态
+     * <p>
+     * 遵循Clean Architecture原则：
+     * - 不可变性保证线程安全
+     * - 纯领域对象，无外部依赖
+     * - 使用纳秒时间戳支持低延迟场景
+     *
+     * @param commandId      关联的命令ID
+     * @param success        执行是否成功
+     * @param data           返回数据(成功时)
+     * @param errorCode      错误码(失败时)
+     * @param errorMessage   错误信息(失败时)
+     * @param timestampNanos 结果生成时间戳(纳秒)
+     * @param durationNanos  命令执行耗时(纳秒) - 用于性能监控
+     */
+    record CommandResult(
+            String commandId,
+            boolean success,
+            Object data,
+            String errorCode,
+            String errorMessage,
+            long timestampNanos,
+            long durationNanos
+    ) {
+        /**
+         * 静态工厂方法 - 成功结果
+         */
+        public static CommandResult success(Command command, Object data) {
+            long now = System.nanoTime();
+            return new CommandResult(
+                    command.commandId(),
+                    true,
+                    data,
+                    null,
+                    null,
+                    now,
+                    now - command.timestampNanos()
+            );
+        }
+
+        /**
+         * 静态工厂方法 - 成功结果(无返回数据)
+         */
+        public static CommandResult success(Command command) {
+            return success(command, null);
+        }
+
+        /**
+         * 静态工厂方法 - 失败结果
+         */
+        public static CommandResult failure(Command command, String errorCode, String errorMessage) {
+            long now = System.nanoTime();
+            return new CommandResult(
+                    command.commandId(),
+                    false,
+                    null,
+                    errorCode,
+                    errorMessage,
+                    now,
+                    now - command.timestampNanos()
+            );
+        }
+
+        /**
+         * 静态工厂方法 - 从异常创建失败结果
+         */
+        public static CommandResult fromException(Command command, Throwable ex) {
+            return failure(
+                    command,
+                    ex.getClass().getSimpleName(),
+                    ex.getMessage()
+            );
+        }
+
+        /**
+         * 获取执行耗时(微秒)
+         */
+        public double getDurationMicros() {
+            return durationNanos / 1000.0;
+        }
+
+        /**
+         * 获取执行耗时(毫秒)
+         */
+        public double getDurationMillis() {
+            return durationNanos / 1_000_000.0;
+        }
+
+        /**
+         * 判断是否为失败结果
+         */
+        public boolean isFailure() {
+            return !success;
+        }
     }
 
     /**
@@ -213,6 +337,7 @@ public interface ICommandHandler {
         /**
          * 操作类型枚举
          */
+        @Getter
         public enum OperationType {
             /**
              * 创建操作
@@ -231,10 +356,6 @@ public interface ICommandHandler {
 
             OperationType(String code) {
                 this.code = code;
-            }
-
-            public String getCode() {
-                return code;
             }
         }
 
