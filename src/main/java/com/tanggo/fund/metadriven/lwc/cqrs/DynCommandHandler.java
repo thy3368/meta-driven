@@ -59,7 +59,7 @@ public class DynCommandHandler implements ICommandHandler {
     }
 
     @Override
-    public void proHandle(Command command) {
+    public void preHandle(Command command) {
 
     }
 

@@ -55,7 +55,7 @@ public class PlaceOrderCommandHandler implements ICommandHandler {
     }
 
     @Override
-    public void proHandle(Command command) {
+    public void preHandle(Command command) {
 
     }
 

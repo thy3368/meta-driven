@@ -43,7 +43,7 @@ public class CancelOrderCommandHandler implements ICommandHandler {
     }
 
     @Override
-    public void proHandle(Command command) {
+    public void preHandle(Command command) {
 
     }
 

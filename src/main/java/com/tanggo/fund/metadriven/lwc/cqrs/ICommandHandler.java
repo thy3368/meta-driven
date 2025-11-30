@@ -10,7 +10,7 @@ public interface ICommandHandler {
 
     void afterHandle(Command command, List<EntityEvent> entityEvents);
 
-    void proHandle(Command command);
+    void preHandle(Command command);
 
     //执行真实业务命令
     List<EntityEvent> doHandle(Command command);

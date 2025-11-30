@@ -23,7 +23,7 @@ public class CommandHandler implements ICommandHandler {
     public CommandResult handle(Command command) {
         try {
             //1. 预处理
-            proHandle(command);
+            preHandle(command);
             //2. 业务操作后 生成entity_event
             List<EntityEvent> entityEvents = doHandle(command);
             //3. 写入流水
@@ -44,7 +44,7 @@ public class CommandHandler implements ICommandHandler {
     }
 
     @Override
-    public void proHandle(Command command) {
+    public void preHandle(Command command) {
     }
 
 //    private void proHandle() {
