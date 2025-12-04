@@ -22,7 +22,7 @@ public class CommandHandler implements ICommandHandler {
     @Override
     public CommandResult handle(Command command) {
         try {
-            //1. 预处理
+            //1. 预处理 ok/error 权限等
             preHandle(command);
             //2. 业务操作后 生成entity_event
             List<EntityEvent> entityEvents = doHandle(command);
