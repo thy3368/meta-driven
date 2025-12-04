@@ -58,11 +58,25 @@ public class Controller {
 
     /**
      * 模拟慢接口
-     * 指标: api.hello.slow.latency
+     * 指标: api.slow.latency
      */
     @GetMapping("/slow")
     public String slow() throws InterruptedException {
         Thread.sleep(100); // 模拟100ms处理时间
         return "slow response";
+    }
+
+    /**
+     * 模拟错误接口 - 用于测试错误率监控
+     * 指标: api.error.requests.total{status="error"}
+     *
+     * 参数fail=true时抛出异常
+     */
+    @GetMapping("/error")
+    public String error(@RequestParam(defaultValue = "false") boolean fail) {
+        if (fail) {
+            throw new RuntimeException("Simulated error for testing error rate monitoring");
+        }
+        return "success";
     }
 }

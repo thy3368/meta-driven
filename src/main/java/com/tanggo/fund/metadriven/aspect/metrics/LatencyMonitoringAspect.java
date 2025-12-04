@@ -1,5 +1,6 @@
 package com.tanggo.fund.metadriven.aspect.metrics;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -15,17 +16,28 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 时延监控切面 - 自动为所有Controller接口记录时延
+ * 时延、QPS和错误率监控切面 - 自动为所有Controller接口记录完整监控指标
  *
  * 功能:
  * 1. 自动监控所有@RestController的接口
- * 2. 为每个接口创建独立的Timer指标
- * 3. 记录P50, P95, P99, P99.9百分位数
- * 4. 支持HTTP方法和路径标签
+ * 2. 为每个接口创建独立的Timer指标（时延）
+ * 3. 为每个接口创建独立的Counter指标（QPS）
+ * 4. 为每个接口创建成功/失败计数器（错误率）
+ * 5. 记录P50, P95, P99, P99.9百分位数
+ * 6. 支持HTTP方法和路径标签
  *
  * 指标命名规则:
- * - api.{controller}.{method}.latency
- * - 例如: api.hello.test.latency, api.hello.ping.latency
+ * - api.{method}.latency         - 时延指标
+ * - api.{method}.requests        - 请求计数指标（用于计算QPS）
+ * - api.{method}.requests.total  - 总请求数（按status标签区分成功/失败）
+ *
+ * QPS计算方式:
+ * - 使用Prometheus: rate(api_test_requests_total[1m])
+ *
+ * 错误率计算方式:
+ * - 使用Prometheus:
+ *   rate(api_test_requests_total{status="error"}[1m]) /
+ *   rate(api_test_requests_total[1m])
  */
 @Aspect
 @Component
@@ -35,10 +47,13 @@ public class LatencyMonitoringAspect {
 
     private final MeterRegistry meterRegistry;
     private final ConcurrentHashMap<String, Timer> timerCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Counter> counterCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Counter> successCounterCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Counter> errorCounterCache = new ConcurrentHashMap<>();
 
     public LatencyMonitoringAspect(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
-        log.info("LatencyMonitoringAspect initialized - 自动监控所有Controller接口时延");
+        log.info("LatencyMonitoringAspect initialized - 自动监控所有Controller接口时延、QPS和错误率");
     }
 
     /**
@@ -54,32 +69,86 @@ public class LatencyMonitoringAspect {
         String httpMethod = getHttpMethod(method);
         String path = getRequestPath(joinPoint.getTarget().getClass(), method);
 
-        // 构建指标名称: api.controller.method.latency
-        String metricName = String.format("api.%s.%s.latency",
+        // 构建基础指标名称
+        String baseMetricName = String.format("api.%s.%s",
                 className.toLowerCase().replace("controller", ""),
                 methodName).replace("..", ".");
 
-        // 获取或创建Timer
-        Timer timer = timerCache.computeIfAbsent(metricName, name ->
+        // 共用的标签
+        String[] tags = new String[]{
+                "controller", className,
+                "method", methodName,
+                "http_method", httpMethod,
+                "path", path
+        };
+
+        // 1. 获取或创建Timer（时延指标）
+        String latencyMetricName = baseMetricName + ".latency";
+        Timer timer = timerCache.computeIfAbsent(latencyMetricName, name ->
                 Timer.builder(name)
                         .description(String.format("%s %s - Endpoint latency", httpMethod, path))
-                        .tag("controller", className)
-                        .tag("method", methodName)
-                        .tag("http_method", httpMethod)
-                        .tag("path", path)
+                        .tags(tags)
                         .publishPercentiles(0.5, 0.95, 0.99, 0.999)
                         .publishPercentileHistogram()
                         .register(meterRegistry)
         );
 
-        // 记录时延 重点
-        return timer.record(() -> {
-            try {
-                return joinPoint.proceed();
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
+        // 2. 获取或创建Counter（请求计数指标，用于QPS计算）
+        String requestsMetricName = baseMetricName + ".requests";
+        Counter counter = counterCache.computeIfAbsent(requestsMetricName, name ->
+                Counter.builder(name)
+                        .description(String.format("%s %s - Request count (for QPS)", httpMethod, path))
+                        .tags(tags)
+                        .register(meterRegistry)
+        );
+
+        // 3. 获取或创建Success Counter（成功计数）
+        String successKey = baseMetricName + ".success";
+        Counter successCounter = successCounterCache.computeIfAbsent(successKey, key -> {
+            String[] successTags = new String[tags.length + 2];
+            System.arraycopy(tags, 0, successTags, 0, tags.length);
+            successTags[tags.length] = "status";
+            successTags[tags.length + 1] = "success";
+
+            return Counter.builder(baseMetricName + ".requests.total")
+                    .description(String.format("%s %s - Successful requests", httpMethod, path))
+                    .tags(successTags)
+                    .register(meterRegistry);
         });
+
+        // 4. 获取或创建Error Counter（失败计数）
+        String errorKey = baseMetricName + ".error";
+        Counter errorCounter = errorCounterCache.computeIfAbsent(errorKey, key -> {
+            String[] errorTags = new String[tags.length + 2];
+            System.arraycopy(tags, 0, errorTags, 0, tags.length);
+            errorTags[tags.length] = "status";
+            errorTags[tags.length + 1] = "error";
+
+            return Counter.builder(baseMetricName + ".requests.total")
+                    .description(String.format("%s %s - Failed requests", httpMethod, path))
+                    .tags(errorTags)
+                    .register(meterRegistry);
+        });
+
+        // 5. 计数总请求
+        counter.increment();
+
+        // 6. 执行方法并记录结果
+        long startTime = System.nanoTime();
+        try {
+            Object result = joinPoint.proceed();
+            // 成功
+            successCounter.increment();
+            long duration = System.nanoTime() - startTime;
+            timer.record(duration, java.util.concurrent.TimeUnit.NANOSECONDS);
+            return result;
+        } catch (Throwable e) {
+            // 失败
+            errorCounter.increment();
+            long duration = System.nanoTime() - startTime;
+            timer.record(duration, java.util.concurrent.TimeUnit.NANOSECONDS);
+            throw e;
+        }
     }
 
     /**
